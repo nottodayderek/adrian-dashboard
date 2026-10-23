@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Adrian">
+<meta name="robots" content="noindex, nofollow">
+<title>Adrian's Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root {
+  /* ===== Not Today Derek brand ===== */
+  --lime: #C6F432; --bg: #0A0A0B; --char: #161618; --char-2: #1F1F23; --line: #2A2A2F; --line-2: #3F3F46;
+  --fg: #FFFFFF; --fg-2: #D4D4D8; --muted: #A1A1AA;
+  /* ===== Traffic lights (scores and scales only) ===== */
+  --red: #EF4444; --amber: #F59E0B; --green: #22C55E;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Fraunces', Georgia, serif;
+  --fs-cap: 12px; --fs-body: 14px; --fs-head: 16px; --fs-title: 28px;
+  --r: 12px; --gap-xs: 4px; --gap-sm: 8px; --gap-md: 12px; --gap-lg: 20px; --gap-xl: 28px;
+  --pad-lg: 20px; --pad-xl: 28px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom)); }
+.ad-in { max-width: 68rem; margin-inline: auto; display: grid; gap: var(--gap-lg); }
+@media (min-width: 48rem) { body { padding: 40px 32px 56px; } }
+
+.ad-brand { display: flex; align-items: center; gap: 8px; font-size: var(--fs-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); font-weight: 600; }
+.ad-brand i { width: 10px; height: 10px; border-radius: 2px; background: var(--lime); display: inline-block; }
+.ad-head h1 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-title); margin: var(--gap-xs) 0; }
+.ad-take { margin: 0; font-size: var(--fs-body); color: var(--fg-2); line-height: 1.5; }
+.ad-take b { font-weight: 600; color: var(--fg); }
+.ad-take b.ad-hl { color: var(--lime); }
+.ad-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-sm) var(--gap-lg); margin-top: var(--gap-sm); }
+.ad-updated { font-size: var(--fs-cap); color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
+.ad-refresh { appearance: none; background: var(--char); color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: var(--fs-cap); cursor: pointer; }
+.ad-refresh:hover { color: var(--lime); border-color: var(--lime); }
+.ad-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-cap); color: var(--muted); }
+.ad-key span { display: inline-flex; align-items: center; gap: 6px; }
+.ad-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.ad-dot.red { background: var(--red); } .ad-dot.amber { background: var(--amber); } .ad-dot.green { background: var(--green); }
+.ad-banner { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.4); color: #FCA5A5; border-radius: var(--r); padding: 12px 16px; font-size: var(--fs-body); }
+.ad-banner[hidden] { display: none; }
+
+.ad-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--char); border: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; position: sticky; top: 8px; z-index: 3; }
+.ad-tabs::-webkit-scrollbar { display: none; }
+.ad-tab { flex: 1 0 auto; appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: var(--fs-body); font-weight: 500; padding: 9px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.ad-tab:hover { color: var(--fg); }
+.ad-tab[aria-selected=true] { background: var(--lime); color: #0A0A0B; }
+.ad-pane { display: grid; gap: var(--gap-lg); }
+.ad-pane[hidden] { display: none; }
+
+.ad-card { background: var(--char); border: 1px solid var(--line); border-radius: calc(var(--r) * 1.5); padding: var(--pad-lg); min-width: 0; }
+.ad-card h2 { font-size: var(--fs-head); font-weight: 500; margin: 0; }
+.ad-note { margin: var(--gap-xs) 0 var(--gap-md); font-size: var(--fs-cap); color: var(--muted); line-height: 1.5; }
+.ad-sect { font-size: var(--fs-cap); color: var(--muted); text-transform: uppercase; letter-spacing: .14em; margin: 0 0 calc(-1 * var(--gap-sm)); }
+.ad-empty { color: var(--muted); font-size: var(--fs-body); padding: 24px 0; text-align: center; }
+
+.ad-hero { background: linear-gradient(140deg, var(--char-2), var(--char) 60%); border: 1px solid var(--line); border-radius: calc(var(--r) * 2); padding: var(--pad-xl); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: var(--gap-xl); align-items: center; position: relative; overflow: hidden; }
+.ad-hero::after { content: ""; position: absolute; right: -6rem; top: -6rem; width: 18rem; height: 18rem; border-radius: 50%; background: radial-gradient(circle, rgba(198,244,50,.14), rgba(198,244,50,0) 70%); pointer-events: none; }
+.ad-hero-l { display: flex; align-items: center; gap: var(--gap-lg); flex-wrap: wrap; }
+.ad-ring { position: relative; width: 168px; height: 168px; flex: none; }
+.ad-ring svg { display: block; }
+.ad-ring-n { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ad-big { font-family: var(--serif); font-weight: 400; font-size: 3.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.ad-ring-n small { color: var(--muted); font-size: var(--fs-cap); margin-top: 2px; }
+.ad-hero-label { font-size: var(--fs-cap); color: var(--muted); text-transform: uppercase; letter-spacing: .12em; }
+.ad-hero h2 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-title); margin: 4px 0 var(--gap-sm); }
+.ad-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ad-chip { background: var(--bg); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px; font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
+.ad-chip b { color: var(--fg); font-weight: 600; }
+.ad-chip b.ad-pos { color: var(--lime); } .ad-chip b.ad-neg { color: var(--red); }
+.ad-status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cap); font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.ad-status.red { color: var(--red); background: rgba(239,68,68,.12); }
+.ad-status.amber { color: var(--amber); background: rgba(245,158,11,.12); }
+.ad-status.green { color: var(--green); background: rgba(34,197,94,.12); }
+.ad-status:empty { display: none; }
+.ad-hero-r { min-width: 0; }
+.ad-spark { position: relative; min-height: 150px; }
+.ad-quote { margin: var(--gap-md) 0 0; padding-left: 12px; border-left: 3px solid var(--lime); color: var(--fg-2); font-style: italic; font-size: var(--fs-body); }
+.ad-quote .lbl { display: block; font-style: normal; color: var(--lime); font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 2px; }
+.ad-quote[hidden] { display: none; }
+
+.ad-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--gap-md); }
+.ad-tile { border-top: 3px solid var(--lime); display: flex; flex-direction: column; gap: 2px; }
+.ad-tile.red { border-top-color: var(--red); } .ad-tile.amber { border-top-color: var(--amber); } .ad-tile.green { border-top-color: var(--green); }
+.ad-tile-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ad-tile h2, .ad-tile h3 { font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0; font-weight: 600; }
+.ad-num { font-family: var(--serif); font-weight: 400; font-size: var(--fs-title); font-variant-numeric: tabular-nums; margin: var(--gap-sm) 0 var(--gap-xs); }
+.ad-num .ad-unit { font-family: var(--sans); font-size: var(--fs-body); color: var(--muted); }
+.ad-num.ad-lime { color: var(--lime); }
+.ad-sub { font-size: var(--fs-cap); color: var(--muted); }
+.ad-meter { height: 6px; border-radius: 999px; background: var(--line); margin-top: var(--gap-sm); overflow: hidden; }
+.ad-meter i { display: block; height: 100%; border-radius: 999px; width: 0; transition: width .8s cubic-bezier(.2,.8,.2,1); }
+.ad-meter.red i { background: var(--red); } .ad-meter.amber i { background: var(--amber); } .ad-meter.green i { background: var(--green); }
+.ad-goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--gap-md); }
+.ad-goal-name { font-size: var(--fs-body); font-weight: 500; margin-top: 4px; }
+
+.ad-chart { position: relative; min-height: 290px; }
+.ad-areas { position: relative; min-height: 200px; }
+.ad-legend { display: flex; flex-wrap: wrap; gap: var(--gap-xs) var(--gap-md); font-size: var(--fs-cap); color: var(--muted); margin-bottom: var(--gap-sm); }
+.ad-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ad-sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.ad-tip { position: absolute; pointer-events: none; background: #0A0A0B; border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: 0 8px 24px rgba(0,0,0,.5); padding: 6px 10px; font-size: var(--fs-cap); white-space: nowrap; display: none; z-index: 4; font-variant-numeric: tabular-nums; }
+.ad-tip .ad-tip-h { color: var(--muted); margin-bottom: 2px; white-space: normal; max-width: 16rem; }
+.ad-tip .ad-tip-r { display: flex; align-items: center; gap: 6px; }
+.ad-tip .ad-tip-n { color: var(--muted); min-width: 4.5rem; }
+
+.ad-wins { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--gap-md); }
+.ad-win-card { background: var(--char); border: 1px solid var(--line); border-left: 3px solid var(--lime); border-radius: var(--r); padding: var(--pad-lg); min-height: 7rem; display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap-sm); }
+.ad-win-card .w { font-size: var(--fs-cap); color: var(--lime); text-transform: uppercase; letter-spacing: .12em; }
+.ad-win-card .t { font-family: var(--serif); font-size: var(--fs-head); line-height: 1.4; }
+.ad-win-card .t::before { content: '“'; } .ad-win-card .t::after { content: '”'; }
+.ad-table-wrap { overflow-x: auto; }
+.ad-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); font-variant-numeric: tabular-nums; color: var(--fg-2); }
+.ad-table th { text-align: left; font-weight: 600; font-size: var(--fs-cap); color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; text-transform: uppercase; letter-spacing: .08em; }
+.ad-table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ad-table .ad-n { text-align: right; }
+.ad-table td.ad-win { min-width: 14rem; font-style: italic; }
+.ad-pill { display: inline-block; min-width: 2.4rem; text-align: center; border-radius: 999px; padding: 1px 8px; font-weight: 600; }
+.ad-pill.red { color: var(--red); background: rgba(239,68,68,.14); } .ad-pill.amber { color: var(--amber); background: rgba(245,158,11,.14); } .ad-pill.green { color: var(--green); background: rgba(34,197,94,.14); }
+.ad-loading { opacity: .35; }
+@media (max-width: 40rem) { .ad-hide-narrow { display: none; } .ad-hero { padding: var(--pad-lg); } }
+@media (prefers-reduced-motion: no-preference) {
+  .ad-pane:not([hidden]) { animation: adIn .35s cubic-bezier(.2,.8,.2,1); }
+  @keyframes adIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}
+</style>
+</head>
+<body>
+<div class="ad-in" id="app">
+  <header class="ad-head">
+    <div class="ad-brand"><i></i>Not Today Derek</div>
+    <h1>Adrian's dashboard</h1>
+    <p class="ad-take" id="takeaway">Loading Adrian's latest numbers…</p>
+    <div class="ad-meta">
+      <div class="ad-key"><span><i class="ad-dot green"></i>Firing</span><span><i class="ad-dot amber"></i>Mid range</span><span><i class="ad-dot red"></i>Needs attention</span></div>
+      <span class="ad-updated"><span id="updated"></span><button class="ad-refresh" id="refresh" type="button">Refresh</button></span>
+    </div>
+  </header>
+
+  <div class="ad-banner" id="banner" hidden>Couldn't load Adrian's data just now. Check your connection and hit Refresh.</div>
+
+  <nav class="ad-tabs" role="tablist" aria-label="Dashboard sections">
+    <button class="ad-tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="ad-tab" role="tab" data-tab="daily" aria-selected="false">Daily check-in</button>
+    <button class="ad-tab" role="tab" data-tab="progress" aria-selected="false">Progress</button>
+    <button class="ad-tab" role="tab" data-tab="log" aria-selected="false">Weekly log</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="ad-pane" id="overview" role="tabpanel">
+    <div class="ad-hero">
+      <div>
+        <div class="ad-hero-l">
+          <div class="ad-ring" id="score-ring">
+            <div class="ad-ring-n"><span class="ad-big" id="score-big">—</span><small>out of 100</small></div>
+          </div>
+          <div>
+            <div class="ad-hero-label">Adrian's score</div>
+            <h2 id="score-label">—</h2>
+            <div class="ad-chips">
+              <span class="ad-status" id="score-status"></span>
+              <span class="ad-chip" id="chip-last"><b id="score-change">—</b> on last week</span>
+              <span class="ad-chip">Started at <b id="score-start">—</b></span>
+            </div>
+          </div>
+        </div>
+        <p class="ad-quote" id="quote" hidden><span class="lbl">Win of the week</span><span id="quote-text"></span></p>
+      </div>
+      <div class="ad-hero-r">
+        <div class="ad-hero-label" style="margin-bottom:8px">Score each week</div>
+        <div class="ad-spark" id="score-trend"></div>
+      </div>
+    </div>
+
+    <div class="ad-tiles">
+      <div class="ad-card ad-tile">
+        <div class="ad-tile-h"><h2>Total clean days</h2></div>
+        <div class="ad-num ad-lime" id="t-clean">—</div>
+        <div class="ad-sub">Since onboarding. A slip doesn't reset it.</div>
+      </div>
+      <div class="ad-card ad-tile">
+        <div class="ad-tile-h"><h2>Money saved</h2></div>
+        <div class="ad-num ad-lime" id="t-money">—</div>
+        <div class="ad-sub">Based on about $300 a month</div>
+      </div>
+      <div class="ad-card ad-tile" id="tile-trig">
+        <div class="ad-tile-h"><h2>Triggers navigated</h2><span class="ad-status"></span></div>
+        <div class="ad-num"><span id="t-nav">—</span> <span class="ad-unit">of</span> <span id="t-faced">—</span></div>
+        <div class="ad-sub" id="t-trig-sub">This week</div>
+      </div>
+      <div class="ad-card ad-tile" id="tile-hobby">
+        <div class="ad-tile-h"><h2>Hobby sessions</h2><span class="ad-status"></span></div>
+        <div class="ad-num"><span id="t-hobby">—</span> <span class="ad-unit">/ 2 target</span></div>
+        <div class="ad-sub">Photography, fishing, bike riding</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DAILY -->
+  <section class="ad-pane" id="daily" role="tabpanel" hidden>
+    <p class="ad-sect">Last 7 check-ins</p>
+    <div class="ad-tiles" id="avg-tiles"></div>
+    <div class="ad-card">
+      <h2>Daily check-in</h2>
+      <p class="ad-note">The coloured zones show where energy, mood and sleep sit: green is firing, amber is mid range, red needs attention. Cravings are the dashed line, and lower is better. A slip is marked in red. Tap or hover a day to see his note.</p>
+      <div class="ad-chart" id="daily-chart"></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="ad-pane" id="progress" role="tabpanel" hidden>
+    <div class="ad-card">
+      <h2>His four goals</h2>
+      <p class="ad-note">How far each goal has moved from onboarding toward its 12-month target.</p>
+      <div class="ad-goals" id="goals"></div>
+    </div>
+    <div class="ad-card">
+      <h2>Where he started, where he is now</h2>
+      <p class="ad-note">Each area out of 10, grouped by goal. The dot shows his latest monthly score, coloured by zone.</p>
+      <div class="ad-areas" id="areas-chart"></div>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section class="ad-pane" id="log" role="tabpanel" hidden>
+    <div class="ad-wins" id="wins"></div>
+    <div class="ad-card">
+      <h2>Weekly log</h2>
+      <p class="ad-note">Filled in at your weekly session. The win is in Adrian's own words.</p>
+      <div class="ad-table-wrap">
+        <table class="ad-table">
+          <thead><tr>
+            <th>Week</th><th class="ad-n">Score</th><th class="ad-n ad-hide-narrow">Triggers</th>
+            <th class="ad-n">Navigated</th><th class="ad-n ad-hide-narrow">Hobbies</th><th class="ad-n">Clean days</th><th>Win of the week</th>
+          </tr></thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ================== SETTINGS ================== */
+const FEED_URL = 'https://script.google.com/macros/s/AKfycbyxAyCdj6GIzBZeq5vuB89yiE1lRVzynM7aZMpuqdNbfQPyY0pXBwS9gqwHDWJCwa5c/exec';
+const SETTINGS = {
+  onboardingDate: '2026-10-01',   // Adrian's onboarding session (yyyy-mm-dd)
+  moneyPerCleanDay: 10,           // about $300 a month
+  hobbyTarget: 2,                 // hobby sessions per week
+  baselineTriggerShare: 0.5,      // assumed at onboarding, for the starting score
+  baselineHobbySessions: 1        // assumed at onboarding, for the starting score
+};
+/* ============================================== */
+
+const C3 = { red: '#EF4444', amber: '#F59E0B', green: '#22C55E' };
+const LIME = '#C6F432';
+const RAG = {
+  label: { red: 'Needs attention', amber: 'Mid range', green: 'Firing' },
+  ten: v => v >= 7 ? 'green' : v >= 4 ? 'amber' : 'red',
+  tenInv: v => v < 4 ? 'green' : v < 7 ? 'amber' : 'red',
+  hundred: v => v >= 70 ? 'green' : v >= 40 ? 'amber' : 'red',
+  share: v => v >= 0.67 ? 'green' : v >= 0.34 ? 'amber' : 'red',
+  hobby: v => v >= SETTINGS.hobbyTarget ? 'green' : v >= 1 ? 'amber' : 'red',
+  trig: (n, f) => !f ? 'green' : n / f >= 1 ? 'green' : n / f >= 0.5 ? 'amber' : 'red'
+};
+const fmtD = d3.timeFormat('%b %-d');
+const $ = id => document.getElementById(id);
+let MODEL = null;
+
+/* ---------- reading the sheet ---------- */
+const keyOf = (row, ...prefixes) => Object.keys(row).find(k => prefixes.some(p => k.toLowerCase().trim().startsWith(p)));
+const val = (row, ...prefixes) => { const k = keyOf(row, ...prefixes); return k === undefined ? '' : row[k]; };
+const num = v => (v === '' || v === null || v === undefined || isNaN(Number(v))) ? NaN : Number(v);
+const isYes = v => String(v).trim().toUpperCase().startsWith('Y');
+const isNo = v => String(v).trim().toUpperCase().startsWith('N');
+const toDate = v => { if (!v) return null; const s = String(v).slice(0, 10); const d = new Date(s + 'T00:00:00'); return isNaN(d) ? null : d; };
+const mean = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN;
+const shortName = s => String(s).replace(/\s*\(.*\)\s*/, '').trim();
+const GOAL_OF = { mental: 'Health', physical: 'Health', abstinence: 'Clean living', connection: 'Connection & trust', 'new life': 'New life' };
+
+function buildModel(feed) {
+  // Baseline / monthly re-scores
+  const areas = (feed.baseline || []).filter(r => String(val(r, 'area')).trim() && !isNaN(num(val(r, 'onboarding')))).map(r => {
+    const monthKeys = Object.keys(r).filter(k => /^month/i.test(k.trim())).sort((a, b) => parseInt(a.replace(/\D/g, '')) - parseInt(b.replace(/\D/g, '')));
+    const months = monthKeys.map(k => num(r[k])).filter(v => !isNaN(v));
+    const onb = num(val(r, 'onboarding'));
+    const name = String(val(r, 'area'));
+    const cat = String(val(r, 'category')).trim().toLowerCase();
+    return { area: shortName(name), goal: GOAL_OF[cat] || String(val(r, 'category')), onboarding: onb, now: months.length ? months[months.length - 1] : onb,
+      target: num(val(r, 'target')), inv: /craving/i.test(name) };
+  });
+  const base = k => { const a = areas.find(x => x.area.toLowerCase().startsWith(k)); return a ? a.onboarding : NaN; };
+
+  // Daily check-ins
+  const daily = (feed.daily || []).map(r => ({
+    date: toDate(val(r, 'date')), energy: num(val(r, 'energy')), mood: num(val(r, 'mood')), sleep: num(val(r, 'sleep')),
+    cravings: num(val(r, 'craving')), clean: val(r, 'clean'), note: String(val(r, 'note') || '').trim()
+  })).filter(d => d.date).sort((a, b) => a.date - b.date);
+  const onbDate = toDate(SETTINGS.onboardingDate);
+  const cleanDays = daily.filter(d => isYes(d.clean)).length;
+
+  // Weekly log
+  const wk = (feed.weekly || []).map(r => ({ raw: r, start: toDate(val(r, 'week start', 'week')) })).filter(w => w.start).sort((a, b) => a.start - b.start);
+  const part = 80 / 6;
+  const scoreOf = (e, m, s, c, share, hobby, clean) =>
+    Math.round((isNaN(e) ? 0 : e) / 10 * part + (isNaN(m) ? 0 : m) / 10 * part + (isNaN(s) ? 0 : s) / 10 * part
+      + (isNaN(c) ? 0 : (10 - c)) / 10 * part + share * part + Math.min(hobby / SETTINGS.hobbyTarget, 1) * part + (clean ? 20 : 0));
+  const weeks = [{
+    n: 0, label: 'Start', start: onbDate, faced: NaN, nav: NaN, hobby: NaN, win: '',
+    score: scoreOf(base('energy'), base('mood'), base('sleep'), base('craving'), SETTINGS.baselineTriggerShare, SETTINGS.baselineHobbySessions, false)
+  }];
+  wk.forEach((w, i) => {
+    const r = w.raw, end = wk[i + 1] ? wk[i + 1].start : d3.timeDay.offset(w.start, 7);
+    const days = daily.filter(d => d.date >= w.start && d.date < end);
+    const faced = num(val(r, 'triggers faced')), nav = num(val(r, 'triggers nav'));
+    const hobby = num(val(r, 'hobby'));
+    const cleanCol = val(r, 'clean week');
+    const cleanWeek = cleanCol !== '' ? isYes(cleanCol) : (days.length > 0 && !days.some(d => isNo(d.clean)));
+    const totalCol = num(val(r, 'total clean'));
+    const total = !isNaN(totalCol) ? totalCol : daily.filter(d => d.date < end && isYes(d.clean)).length;
+    const share = isNaN(faced) || faced === 0 ? 1 : (isNaN(nav) ? 0 : nav) / faced;
+    const avg = k => mean(days.map(d => d[k]).filter(v => !isNaN(v)));
+    weeks.push({ n: i + 1, label: 'Week ' + (i + 1), start: w.start, faced, nav, hobby: isNaN(hobby) ? 0 : hobby, total,
+      win: String(val(r, 'weekly win', 'win') || '').trim(),
+      score: scoreOf(avg('energy'), avg('mood'), avg('sleep'), avg('cravings'), share, isNaN(hobby) ? 0 : hobby, cleanWeek) });
+  });
+  weeks.forEach((w, i) => { w.change = i ? w.score - weeks[i - 1].score : 0; });
+
+  // Goals
+  const GOAL_ORDER = ['Health', 'Clean living', 'Connection & trust', 'New life'];
+  const goalNames = []; areas.forEach(a => { if (!goalNames.includes(a.goal)) goalNames.push(a.goal); });
+  goalNames.sort((a, b) => (GOAL_ORDER.indexOf(a) + 1 || 99) - (GOAL_ORDER.indexOf(b) + 1 || 99));
+  const goals = goalNames.map(g => {
+    const rows = areas.filter(a => a.goal === g);
+    const prog = mean(rows.map(a => a.target === a.onboarding ? 1 : Math.max(0, Math.min(1, (a.now - a.onboarding) / (a.target - a.onboarding)))));
+    return { goal: g, progress: prog };
+  });
+
+  // Daily chart series, starting from the onboarding baseline
+  const series = [];
+  if (onbDate && !isNaN(base('energy'))) series.push({ date: onbDate, energy: base('energy'), mood: base('mood'), sleep: base('sleep'), cravings: base('craving'), clean: '', note: 'Onboarding baseline', onboarding: true });
+  daily.forEach(d => series.push(d));
+
+  return { areas, daily, series, weeks, goals, cleanDays, money: cleanDays * SETTINGS.moneyPerCleanDay };
+}
+
+/* ---------- helpers ---------- */
+function setStatus(host, st) {
+  if (!host) return;
+  const s = host.querySelector('.ad-status') || host;
+  ['red', 'amber', 'green'].forEach(c => { if (host.classList.contains('ad-tile')) host.classList.toggle(c, c === st); s.classList.toggle(c, c === st); });
+  s.innerHTML = '';
+  if (st) { const d = document.createElement('i'); d.className = 'ad-dot ' + st; s.appendChild(d); s.appendChild(document.createTextNode(RAG.label[st])); }
+}
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function emptyMsg(box, text) { box.innerHTML = ''; box.appendChild(el('div', 'ad-empty', text)); }
+
+/* ---------- overview ---------- */
+function drawOverview(M) {
+  const latest = M.weeks[M.weeks.length - 1], start = M.weeks[0];
+  const st = RAG.hundred(latest.score);
+  $('takeaway').innerHTML = '';
+  const t = $('takeaway');
+  const b = (txt, cls) => { const x = el('b', cls, txt); t.appendChild(x); };
+  if (M.weeks.length > 1) {
+    t.append('This week Adrian scored '); b(String(latest.score), 'ad-hl'); t.append(' out of 100, ');
+    b(d3.format('+')(latest.score - start.score)); t.append(' since onboarding, with '); b(String(M.cleanDays)); t.append(' clean days behind him.');
+  } else {
+    t.append('Adrian starts at '); b(String(start.score), 'ad-hl'); t.append(' out of 100. His weekly scores appear here once the first week is logged.');
+  }
+  $('score-big').textContent = latest.score;
+  $('score-big').style.color = C3[st];
+  $('score-label').textContent = latest.n === 0 ? 'Onboarding' : latest.label;
+  setStatus($('score-status'), st);
+  const ch = $('score-change'); ch.textContent = d3.format('+')(latest.change);
+  ch.classList.toggle('ad-pos', latest.change > 0); ch.classList.toggle('ad-neg', latest.change < 0);
+  $('chip-last').style.display = latest.n === 0 ? 'none' : '';
+  $('score-start').textContent = start.score;
+  const lastWin = [...M.weeks].reverse().find(w => w.win);
+  $('quote').hidden = !lastWin; if (lastWin) $('quote-text').textContent = lastWin.win;
+
+  $('t-clean').textContent = d3.format(',')(M.cleanDays);
+  $('t-money').textContent = d3.format('$,.0f')(M.money);
+  if (latest.n > 0) {
+    $('t-nav').textContent = isNaN(latest.nav) ? 0 : latest.nav; $('t-faced').textContent = isNaN(latest.faced) ? 0 : latest.faced;
+    setStatus($('tile-trig'), RAG.trig(isNaN(latest.nav) ? 0 : latest.nav, isNaN(latest.faced) ? 0 : latest.faced));
+    $('t-hobby').textContent = latest.hobby; setStatus($('tile-hobby'), RAG.hobby(latest.hobby));
+  } else {
+    ['t-nav', 't-faced', 't-hobby'].forEach(i => $(i).textContent = '—'); setStatus($('tile-trig'), null); setStatus($('tile-hobby'), null);
+  }
+
+  // ring
+  const ring = $('score-ring'); ring.querySelectorAll('svg').forEach(s => s.remove());
+  const S = 168, R = 74, Cc = 2 * Math.PI * R;
+  const rs = d3.select(ring).insert('svg', ':first-child').attr('width', S).attr('height', S).attr('viewBox', `0 0 ${S} ${S}`).attr('aria-hidden', 'true');
+  rs.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', '#26262B').attr('stroke-width', 12);
+  const arc = rs.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', C3[st]).attr('stroke-width', 12)
+    .attr('stroke-linecap', 'round').attr('transform', `rotate(-90 ${S / 2} ${S / 2})`).attr('stroke-dasharray', Cc).attr('stroke-dashoffset', Cc * (1 - latest.score / 100));
+  if (!window.ringDone && matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    window.ringDone = true;
+    arc.attr('stroke-dashoffset', Cc).transition().duration(900).ease(d3.easeCubicOut).attr('stroke-dashoffset', Cc * (1 - latest.score / 100));
+  }
+
+  // weekly bars
+  const box = $('score-trend'); box.innerHTML = '';
+  if (!box.clientWidth) return;
+  const rows = M.weeks, W = box.clientWidth, H = 150, m = { t: 22, r: 4, b: 22, l: 4 };
+  const x = d3.scaleBand(rows.map(d => d.label), [m.l, W - m.r]).padding(0.35);
+  const y = d3.scaleLinear([0, 100], [H - m.b, m.t]);
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Weekly score');
+  [[40, C3.amber], [70, C3.green]].forEach(([v, c]) => svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).attr('stroke', c).attr('stroke-opacity', .35).attr('stroke-dasharray', '3 4'));
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', '#3F3F46');
+  const last = rows.length - 1, bw = Math.min(32, x.bandwidth());
+  svg.selectAll('rect').data(rows).join('rect')
+    .attr('x', d => x(d.label) + (x.bandwidth() - bw) / 2).attr('width', bw).attr('y', d => y(d.score)).attr('height', d => y(0) - y(d.score)).attr('rx', 4)
+    .attr('fill', d => C3[RAG.hundred(d.score)]).attr('fill-opacity', (d, i) => i === last ? 1 : .55)
+    .attr('stroke', (d, i) => i === last ? LIME : 'none').attr('stroke-width', 2);
+  svg.selectAll('text.v').data(rows).join('text').attr('class', 'v').attr('x', d => x(d.label) + x.bandwidth() / 2).attr('y', d => y(d.score) - 7).attr('text-anchor', 'middle')
+    .attr('fill', (d, i) => i === last ? LIME : '#D4D4D8').style('font-size', '12px').style('font-weight', 600).text(d => d.score);
+  svg.selectAll('text.l').data(rows).join('text').attr('class', 'l').attr('x', d => x(d.label) + x.bandwidth() / 2).attr('y', H - 4).attr('text-anchor', 'middle')
+    .attr('fill', '#A1A1AA').style('font-size', '12px').text(d => d.n === 0 ? 'Start' : (x.bandwidth() < 56 ? 'W' + d.n : d.label));
+}
+
+/* ---------- daily ---------- */
+function drawDaily(M) {
+  // averages of the last 7 check-ins
+  const tiles = $('avg-tiles'); tiles.innerHTML = '';
+  const last7 = M.daily.slice(-7);
+  [['energy', 'Energy'], ['mood', 'Mood'], ['sleep', 'Sleep'], ['cravings', 'Cravings']].forEach(([k, n]) => {
+    const v = mean(last7.map(d => d[k]).filter(x => !isNaN(x)));
+    const c = el('div', 'ad-card ad-tile');
+    const h = el('div', 'ad-tile-h'); h.appendChild(el('h3', '', n)); h.appendChild(el('span', 'ad-status')); c.appendChild(h);
+    const nm = el('div', 'ad-num'); nm.appendChild(document.createTextNode(isNaN(v) ? '—' : d3.format('.1f')(v) + ' ')); nm.appendChild(el('span', 'ad-unit', '/ 10')); c.appendChild(nm);
+    if (k === 'cravings') c.appendChild(el('div', 'ad-sub', 'Lower is better'));
+    tiles.appendChild(c);
+    setStatus(c, isNaN(v) ? null : (k === 'cravings' ? RAG.tenInv(v) : RAG.ten(v)));
+  });
+
+  const box = $('daily-chart'); box.innerHTML = '';
+  const rows = M.series;
+  if (rows.length < 2) { emptyMsg(box, 'No daily check-ins logged yet. Add rows to the Daily tab and they will show here.'); return; }
+  if (!box.clientWidth) return;
+  const series = [
+    { k: 'energy', n: 'Energy', c: LIME, w: 2.5 }, { k: 'mood', n: 'Mood', c: '#FFFFFF', w: 2 },
+    { k: 'sleep', n: 'Sleep', c: '#7DD3FC', w: 2 }, { k: 'cravings', n: 'Cravings', c: '#C084FC', w: 2, dash: true }
+  ];
+  const lg = el('div', 'ad-legend');
+  series.forEach(s => { const sp = el('span'); const sw = el('i', 'ad-sw'); sw.style.background = s.dash ? `repeating-linear-gradient(90deg, ${s.c} 0 5px, transparent 5px 8px)` : s.c; sp.appendChild(sw); sp.append(s.n + (s.dash ? ' (lower is better)' : '')); lg.appendChild(sp); });
+  box.appendChild(lg);
+  const W = box.clientWidth, H = 270, m = { t: 18, r: 12, b: 24, l: 30 };
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Daily energy, mood, sleep and cravings');
+  const x = d3.scaleTime(d3.extent(rows, d => d.date), [m.l, W - m.r]);
+  const y = d3.scaleLinear([0, 10], [H - m.b, m.t]);
+  [[0, 4, C3.red], [4, 7, C3.amber], [7, 10, C3.green]].forEach(([a, b, c]) => {
+    svg.append('rect').attr('x', m.l).attr('width', W - m.l - m.r).attr('y', y(b)).attr('height', y(a) - y(b)).attr('fill', c).attr('fill-opacity', .07);
+    svg.append('rect').attr('x', m.l - 4).attr('width', 3).attr('y', y(b) + 1).attr('height', y(a) - y(b) - 2).attr('rx', 1.5).attr('fill', c);
+  });
+  [0, 2, 4, 6, 8, 10].forEach(t => {
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', t ? '#2A2A2F' : '#3F3F46');
+    svg.append('text').attr('x', m.l - 9).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', '#A1A1AA').style('font-size', '12px').text(t);
+  });
+  const xa = svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - m.l) / 90))).tickFormat(fmtD).tickSize(0).tickPadding(8));
+  xa.attr('font-size', null).attr('font-family', null); xa.select('.domain').remove();
+  xa.selectAll('text').attr('fill', '#A1A1AA').style('font-size', '12px');
+  rows.filter(d => !d.onboarding && isNo(d.clean)).forEach(d => {
+    svg.append('line').attr('x1', x(d.date)).attr('x2', x(d.date)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', C3.red).attr('stroke-dasharray', '4 4');
+    svg.append('text').attr('x', x(d.date) + 4).attr('y', m.t).attr('dy', '0.7em').attr('fill', C3.red).style('font-size', '12px').style('font-weight', 600).text('Slip');
+  });
+  series.forEach(s => {
+    svg.append('path').datum(rows.filter(d => !isNaN(d[s.k]))).attr('fill', 'none').attr('stroke', s.c).attr('stroke-width', s.w)
+      .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round').attr('stroke-dasharray', s.dash ? '6 4' : null)
+      .attr('d', d3.line().x(d => x(d.date)).y(d => y(d[s.k])));
+  });
+  const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', '#71717A').style('display', 'none');
+  const dots = series.map(s => svg.append('circle').attr('r', 4).attr('fill', s.c).attr('stroke', '#0A0A0B').attr('stroke-width', 1.5).style('display', 'none'));
+  const tip = el('div', 'ad-tip'); box.appendChild(tip);
+  const bis = d3.bisector(d => d.date).center;
+  const move = ev => {
+    const [px] = d3.pointer(ev);
+    const d = rows[bis(rows, x.invert(px))]; const cx = x(d.date);
+    rule.attr('x1', cx).attr('x2', cx).style('display', null);
+    dots.forEach((c, i) => { const v = d[series[i].k]; c.attr('cx', cx).attr('cy', y(isNaN(v) ? 0 : v)).style('display', isNaN(v) ? 'none' : null); });
+    tip.innerHTML = '';
+    tip.appendChild(el('div', 'ad-tip-h', (d.onboarding ? 'Onboarding · ' : '') + fmtD(d.date) + (!d.onboarding && isNo(d.clean) ? ' · slip' : '')));
+    series.forEach(s => {
+      const v = d[s.k]; if (isNaN(v)) return;
+      const st = s.k === 'cravings' ? RAG.tenInv(v) : RAG.ten(v);
+      const rr = el('div', 'ad-tip-r'); const sw = el('i', 'ad-sw'); sw.style.background = s.c; rr.appendChild(sw);
+      rr.appendChild(el('span', 'ad-tip-n', s.n)); const bv = el('b', '', String(v)); bv.style.color = C3[st]; rr.appendChild(bv); tip.appendChild(rr);
+    });
+    if (d.note && !d.onboarding) { const nt = el('div', 'ad-tip-h', '“' + d.note + '”'); nt.style.marginTop = '4px'; nt.style.fontStyle = 'italic'; tip.appendChild(nt); }
+    tip.style.display = 'block';
+    const scale = svg.node().getBoundingClientRect().width / W, bw = box.clientWidth, tw = tip.offsetWidth;
+    let left = cx * scale + 12; if (left + tw > bw) left = cx * scale - tw - 12;
+    tip.style.left = Math.max(0, left) + 'px'; tip.style.top = (lg.offsetHeight + m.t * scale) + 'px';
+  };
+  const hide = () => { tip.style.display = 'none'; rule.style('display', 'none'); dots.forEach(c => c.style('display', 'none')); };
+  svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+    .on('pointermove', move).on('pointerdown', move).on('pointerleave', hide);
+}
+
+/* ---------- progress ---------- */
+function drawProgress(M) {
+  const g = $('goals'); g.innerHTML = '';
+  M.goals.forEach((x, i) => {
+    const st = RAG.share(x.progress);
+    const c = el('div', 'ad-card ad-tile');
+    const hd = el('div', 'ad-tile-h'); hd.appendChild(el('h3', '', 'Goal ' + (i + 1))); hd.appendChild(el('span', 'ad-status')); c.appendChild(hd);
+    c.appendChild(el('div', 'ad-goal-name', x.goal));
+    c.appendChild(el('div', 'ad-num', d3.format('.0%')(x.progress)));
+    c.appendChild(el('div', 'ad-sub', 'of the way to target'));
+    const mtr = el('div', 'ad-meter ' + st); const bar = el('i'); mtr.appendChild(bar); c.appendChild(mtr);
+    g.appendChild(c); setStatus(c, st);
+    requestAnimationFrame(() => { bar.style.width = Math.round(x.progress * 100) + '%'; });
+  });
+
+  const box = $('areas-chart'); box.innerHTML = '';
+  if (!M.areas.length) { emptyMsg(box, 'No baseline scores found in the Baseline tab.'); return; }
+  if (!box.clientWidth) return;
+  const lg = el('div', 'ad-legend');
+  lg.innerHTML = '<span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#A1A1AA" stroke-width="1.5"/></svg>Onboarding</span>'
+    + '<span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#22C55E"/></svg>Now (coloured by zone)</span>'
+    + '<span><svg width="12" height="12"><line x1="6" x2="6" y1="0" y2="12" stroke="#C6F432" stroke-width="2"/></svg>Target</span>';
+  box.appendChild(lg);
+  const order = M.goals.map(g => g.goal);
+  const items = []; order.forEach(gn => { items.push({ head: gn }); M.areas.filter(a => a.goal === gn).forEach(a => items.push({ ...a })); });
+  const W = box.clientWidth, rowH = 30, headH = 34;
+  let yPos = 0; items.forEach(it => { it.y = yPos + (it.head ? headH - 8 : rowH / 2); yPos += it.head ? headH : rowH; });
+  const H = yPos + 24;
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Area scores at onboarding and now');
+  let labW = 0;
+  items.filter(i => !i.head).forEach(i => { const t = svg.append('text').style('font-size', '14px').text(i.area); labW = Math.max(labW, t.node().getComputedTextLength()); t.remove(); });
+  const narrow = W < 420;
+  const x0 = Math.min(labW + 14, W * 0.42), x1 = W - (narrow ? 8 : 64);
+  const x = d3.scaleLinear([0, 10], [x0, x1]);
+  [0, 4, 7, 10].forEach(t => svg.append('text').attr('x', x(t)).attr('y', H - 4).attr('text-anchor', 'middle').attr('fill', '#A1A1AA').style('font-size', '12px').text(t));
+  const tip = el('div', 'ad-tip'); box.appendChild(tip);
+  items.forEach(it => {
+    if (it.head) { svg.append('text').attr('x', 0).attr('y', it.y).attr('fill', LIME).style('font-size', '12px').style('text-transform', 'uppercase').style('letter-spacing', '.12em').style('font-weight', 600).text(it.head); return; }
+    const zones = it.inv ? [[0, 4, C3.green], [4, 7, C3.amber], [7, 10, C3.red]] : [[0, 4, C3.red], [4, 7, C3.amber], [7, 10, C3.green]];
+    const rate = v => it.inv ? RAG.tenInv(v) : RAG.ten(v);
+    const st = rate(it.now);
+    const gr = svg.append('g');
+    gr.append('rect').attr('x', 0).attr('y', it.y - rowH / 2).attr('width', W).attr('height', rowH).attr('fill', 'transparent');
+    gr.append('text').attr('x', 0).attr('y', it.y).attr('dy', '0.32em').attr('fill', '#FFFFFF').style('font-size', '14px').text(it.area);
+    zones.forEach(([a, b, c]) => gr.append('rect').attr('x', x(a) + (a ? 1 : 0)).attr('width', x(b) - x(a) - (a ? 1 : 0) - (b < 10 ? 1 : 0)).attr('y', it.y - 4).attr('height', 8).attr('rx', a === 0 || b === 10 ? 4 : 0).attr('fill', c).attr('fill-opacity', .22));
+    gr.append('line').attr('x1', x(it.onboarding)).attr('x2', x(it.now)).attr('y1', it.y).attr('y2', it.y).attr('stroke', '#FFFFFF').attr('stroke-width', 2).attr('stroke-opacity', .5);
+    if (!isNaN(it.target)) gr.append('line').attr('x1', x(it.target)).attr('x2', x(it.target)).attr('y1', it.y - 10).attr('y2', it.y + 10).attr('stroke', LIME).attr('stroke-width', 2.5).attr('stroke-linecap', 'round');
+    gr.append('circle').attr('cx', x(it.onboarding)).attr('cy', it.y).attr('r', 4.5).attr('fill', '#161618').attr('stroke', '#A1A1AA').attr('stroke-width', 1.5);
+    gr.append('circle').attr('cx', x(it.now)).attr('cy', it.y).attr('r', 7).attr('fill', C3[st]).attr('stroke', '#161618').attr('stroke-width', 2);
+    if (!narrow) gr.append('text').attr('x', W - 2).attr('y', it.y).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', C3[st]).style('font-size', '12px').style('font-weight', 600).text(it.onboarding + ' → ' + it.now);
+    const show = () => {
+      tip.innerHTML = ''; tip.appendChild(el('div', 'ad-tip-h', it.area + (it.inv ? ' (lower is better)' : '')));
+      [['Onboarding', it.onboarding, rate(it.onboarding)], ['Now', it.now, st], ['Target', it.target, null]].forEach(([n, v, s]) => {
+        const rr = el('div', 'ad-tip-r'); rr.appendChild(el('span', 'ad-tip-n', n)); const b = el('b', '', v + ' / 10'); b.style.color = s ? C3[s] : LIME; rr.appendChild(b); tip.appendChild(rr);
+      });
+      tip.style.display = 'block';
+      const scale = svg.node().getBoundingClientRect().width / W;
+      tip.style.left = Math.max(0, Math.min(box.clientWidth - tip.offsetWidth, x0 * scale)) + 'px';
+      tip.style.top = (lg.offsetHeight + (it.y + rowH / 2) * scale + 4) + 'px';
+    };
+    gr.on('pointerenter', show).on('pointerdown', show).on('pointerleave', () => { tip.style.display = 'none'; });
+  });
+}
+
+/* ---------- weekly log ---------- */
+function drawLog(M) {
+  const wins = $('wins'); wins.innerHTML = '';
+  const logged = M.weeks.filter(w => w.n > 0).reverse();
+  logged.filter(w => w.win).forEach(w => {
+    const c = el('div', 'ad-win-card'); c.appendChild(el('div', 't', w.win)); c.appendChild(el('div', 'w', w.label)); wins.appendChild(c);
+  });
+  const tb = $('log-body'); tb.innerHTML = '';
+  if (!logged.length) { const tr = el('tr'); const td = el('td', 'ad-empty', 'No weeks logged yet. Add a row to the Weekly tab after your weekly session.'); td.colSpan = 7; tr.appendChild(td); tb.appendChild(tr); return; }
+  logged.forEach(w => {
+    const tr = el('tr');
+    const add = (v, cls, pill) => { const td = el('td', cls); if (pill) td.appendChild(el('span', 'ad-pill ' + pill, String(v))); else td.textContent = v; tr.appendChild(td); };
+    const nav = isNaN(w.nav) ? 0 : w.nav, faced = isNaN(w.faced) ? 0 : w.faced;
+    add(w.label, ''); add(w.score, 'ad-n', RAG.hundred(w.score)); add(faced, 'ad-n ad-hide-narrow');
+    add(nav, 'ad-n', RAG.trig(nav, faced)); add(w.hobby, 'ad-n ad-hide-narrow', RAG.hobby(w.hobby));
+    add(w.total, 'ad-n'); add(w.win || '—', 'ad-win');
+    tb.appendChild(tr);
+  });
+}
+
+/* ---------- wiring ---------- */
+function drawAll() { if (!MODEL) return; drawOverview(MODEL); drawDaily(MODEL); drawProgress(MODEL); drawLog(MODEL); }
+document.querySelectorAll('.ad-tab').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.ad-tab').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+  document.querySelectorAll('.ad-pane').forEach(p => { p.hidden = p.id !== btn.dataset.tab; });
+  history.replaceState(null, '', '#' + btn.dataset.tab);
+  drawAll();
+}));
+const startTab = location.hash.slice(1);
+if (['overview', 'daily', 'progress', 'log'].includes(startTab)) document.querySelector(`.ad-tab[data-tab="${startTab}"]`).click();
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 150); });
+
+async function load() {
+  const app = $('app'); app.classList.add('ad-loading'); $('refresh').disabled = true;
+  try {
+    const res = await fetch(FEED_URL + (FEED_URL.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    MODEL = buildModel(await res.json());
+    $('banner').hidden = true;
+    $('updated').textContent = 'Updated ' + d3.timeFormat('%-I:%M %p, %b %-d')(new Date());
+    drawAll();
+  } catch (e) {
+    console.error(e);
+    $('banner').hidden = false;
+  } finally {
+    app.classList.remove('ad-loading'); $('refresh').disabled = false;
+  }
+}
+$('refresh').addEventListener('click', load);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && MODEL) load(); });
+load();
+</script>
+</body>
+</html>
