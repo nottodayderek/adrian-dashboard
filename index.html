@@ -104,6 +104,23 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
 .ad-goal-name { font-size: var(--fs-body); font-weight: 500; margin-top: 4px; }
 
 .ad-chart { position: relative; min-height: 290px; }
+.ad-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--gap-md); }
+.ad-ringcard { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: var(--pad-lg); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+.ad-ringcard .gn { font-size: var(--fs-cap); color: var(--lime); text-transform: uppercase; letter-spacing: .12em; font-weight: 600; }
+.ad-ringcard .gt { font-size: var(--fs-body); font-weight: 500; }
+.ad-ringbox { position: relative; width: 132px; height: 132px; margin: 6px 0; }
+.ad-ringbox svg { display: block; }
+.ad-ringbox .c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 18px; }
+.ad-ringbox .v { font-family: var(--serif); font-size: 2.3rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.ad-ringbox .u { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.25; }
+.ad-ringcard .sub { font-size: var(--fs-cap); color: var(--muted); min-height: 2.6em; line-height: 1.45; }
+.ad-trends { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: var(--gap-md); }
+.ad-trend { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 14px 8px; min-width: 0; }
+.ad-trend-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.ad-trend h3 { margin: 0; font-size: var(--fs-body); font-weight: 500; }
+.ad-trend .now { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ad-trend .now b { font-size: var(--fs-head); }
+.ad-trend .box { position: relative; min-height: 170px; }
 .ad-areas { position: relative; min-height: 200px; }
 .ad-legend { display: flex; flex-wrap: wrap; gap: var(--gap-xs) var(--gap-md); font-size: var(--fs-cap); color: var(--muted); margin-bottom: var(--gap-sm); }
 .ad-legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -150,7 +167,7 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
 
   <nav class="ad-tabs" role="tablist" aria-label="Dashboard sections">
     <button class="ad-tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
-    <button class="ad-tab" role="tab" data-tab="daily" aria-selected="false">Daily check-in</button>
+    <button class="ad-tab" role="tab" data-tab="checkin" aria-selected="false">Weekly check-in</button>
     <button class="ad-tab" role="tab" data-tab="progress" aria-selected="false">Progress</button>
     <button class="ad-tab" role="tab" data-tab="log" aria-selected="false">Weekly log</button>
   </nav>
@@ -205,14 +222,14 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
     </div>
   </section>
 
-  <!-- DAILY -->
-  <section class="ad-pane" id="daily" role="tabpanel" hidden>
-    <p class="ad-sect">Last 7 check-ins</p>
+  <!-- WEEKLY CHECK-IN -->
+  <section class="ad-pane" id="checkin" role="tabpanel" hidden>
+    <p class="ad-sect" id="ci-sect">This week</p>
     <div class="ad-tiles" id="avg-tiles"></div>
     <div class="ad-card">
-      <h2>Daily check-in</h2>
-      <p class="ad-note">The coloured zones show where energy, mood and sleep sit: green is firing, amber is mid range, red needs attention. Cravings are the dashed line, and lower is better. A slip is marked in red. Tap or hover a day to see his note.</p>
-      <div class="ad-chart" id="daily-chart"></div>
+      <h2>Weekly check-in</h2>
+      <p class="ad-note">One point per week, from onboarding. The coloured zones show where energy, mood and sleep sit: green is firing, amber is mid range, red needs attention. Cravings are the dashed line, and lower is better. A week with a slip is marked in red.</p>
+      <div class="ad-chart" id="weekly-chart"></div>
     </div>
   </section>
 
@@ -220,12 +237,17 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
   <section class="ad-pane" id="progress" role="tabpanel" hidden>
     <div class="ad-card">
       <h2>His four goals</h2>
-      <p class="ad-note">How far each goal has moved from onboarding toward its 12-month target.</p>
-      <div class="ad-goals" id="goals"></div>
+      <p class="ad-note">Each circle shows where Adrian is this week against his 12-month target.</p>
+      <div class="ad-rings" id="goals"></div>
+    </div>
+    <div class="ad-card">
+      <h2>Trends</h2>
+      <p class="ad-note">Week by week since onboarding. Dots are coloured by zone, and the dashed lime line is his target.</p>
+      <div class="ad-trends" id="trends"></div>
     </div>
     <div class="ad-card">
       <h2>Where he started, where he is now</h2>
-      <p class="ad-note">Each area out of 10, grouped by goal. The dot shows his latest monthly score, coloured by zone.</p>
+      <p class="ad-note">Each area out of 10, grouped by goal. Energy, mood, sleep and cravings update every week. The rest update at his monthly re-score.</p>
       <div class="ad-areas" id="areas-chart"></div>
     </div>
   </section>
@@ -253,7 +275,7 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
 /* ================== SETTINGS ================== */
 const FEED_URL = 'https://script.google.com/macros/s/AKfycbyxAyCdj6GIzBZeq5vuB89yiE1lRVzynM7aZMpuqdNbfQPyY0pXBwS9gqwHDWJCwa5c/exec';
 const SETTINGS = {
-  onboardingDate: '2026-10-01',   // Adrian's onboarding session (yyyy-mm-dd)
+  onboardingDate: '2026-10-05',   // Adrian's onboarding session (yyyy-mm-dd)
   moneyPerCleanDay: 10,           // about $300 a month
   hobbyTarget: 2,                 // hobby sessions per week
   baselineTriggerShare: 0.5,      // assumed at onboarding, for the starting score
@@ -295,7 +317,7 @@ function buildModel(feed) {
     const onb = num(val(r, 'onboarding'));
     const name = String(val(r, 'area'));
     const cat = String(val(r, 'category')).trim().toLowerCase();
-    return { area: shortName(name), goal: GOAL_OF[cat] || String(val(r, 'category')), onboarding: onb, now: months.length ? months[months.length - 1] : onb,
+    return { area: shortName(name), goal: GOAL_OF[cat] || String(val(r, 'category')), onboarding: onb, now: months.length ? months[months.length - 1] : onb, rescored: months.length > 0,
       target: num(val(r, 'target')), inv: /craving/i.test(name) };
   });
   const base = k => { const a = areas.find(x => x.area.toLowerCase().startsWith(k)); return a ? a.onboarding : NaN; };
@@ -315,7 +337,8 @@ function buildModel(feed) {
     Math.round((isNaN(e) ? 0 : e) / 10 * part + (isNaN(m) ? 0 : m) / 10 * part + (isNaN(s) ? 0 : s) / 10 * part
       + (isNaN(c) ? 0 : (10 - c)) / 10 * part + share * part + Math.min(hobby / SETTINGS.hobbyTarget, 1) * part + (clean ? 20 : 0));
   const weeks = [{
-    n: 0, label: 'Start', start: onbDate, faced: NaN, nav: NaN, hobby: NaN, win: '',
+    n: 0, label: 'Start', start: onbDate, faced: NaN, nav: NaN, hobby: SETTINGS.baselineHobbySessions, win: '', share: NaN, slip: false,
+    energy: base('energy'), mood: base('mood'), sleep: base('sleep'), cravings: base('craving'),
     score: scoreOf(base('energy'), base('mood'), base('sleep'), base('craving'), SETTINGS.baselineTriggerShare, SETTINGS.baselineHobbySessions, false)
   }];
   wk.forEach((w, i) => {
@@ -330,10 +353,18 @@ function buildModel(feed) {
     const share = isNaN(faced) || faced === 0 ? 1 : (isNaN(nav) ? 0 : nav) / faced;
     const avg = k => mean(days.map(d => d[k]).filter(v => !isNaN(v)));
     weeks.push({ n: i + 1, label: 'Week ' + (i + 1), start: w.start, faced, nav, hobby: isNaN(hobby) ? 0 : hobby, total,
+      energy: avg('energy'), mood: avg('mood'), sleep: avg('sleep'), cravings: avg('cravings'),
+      share: isNaN(faced) ? NaN : share, slip: days.some(d => isNo(d.clean)) || (cleanCol !== '' && !isYes(cleanCol)),
       win: String(val(r, 'weekly win', 'win') || '').trim(),
       score: scoreOf(avg('energy'), avg('mood'), avg('sleep'), avg('cravings'), share, isNaN(hobby) ? 0 : hobby, cleanWeek) });
   });
   weeks.forEach((w, i) => { w.change = i ? w.score - weeks[i - 1].score : 0; });
+  // Energy, mood, sleep and cravings move every week, so their "now" comes from the latest week
+  const lastWk = weeks[weeks.length - 1];
+  areas.forEach(a => {
+    const k = ['energy', 'mood', 'sleep', 'craving'].find(x => a.area.toLowerCase().startsWith(x));
+    if (k && weeks.length > 1) { const v = lastWk[k === 'craving' ? 'cravings' : k]; if (!isNaN(v)) { a.now = Math.round(v * 10) / 10; a.weekly = true; } }
+  });
 
   // Goals
   const GOAL_ORDER = ['Health', 'Clean living', 'Connection & trust', 'New life'];
@@ -350,7 +381,7 @@ function buildModel(feed) {
   if (onbDate && !isNaN(base('energy'))) series.push({ date: onbDate, energy: base('energy'), mood: base('mood'), sleep: base('sleep'), cravings: base('craving'), clean: '', note: 'Onboarding baseline', onboarding: true });
   daily.forEach(d => series.push(d));
 
-  return { areas, daily, series, weeks, goals, cleanDays, money: cleanDays * SETTINGS.moneyPerCleanDay };
+  return { areas, daily, series, weeks, goals, cleanDays, daysLogged: daily.length, money: cleanDays * SETTINGS.moneyPerCleanDay };
 }
 
 /* ---------- helpers ---------- */
@@ -430,99 +461,213 @@ function drawOverview(M) {
     .attr('fill', '#A1A1AA').style('font-size', '12px').text(d => d.n === 0 ? 'Start' : (x.bandwidth() < 56 ? 'W' + d.n : d.label));
 }
 
-/* ---------- daily ---------- */
-function drawDaily(M) {
-  // averages of the last 7 check-ins
+/* ---------- shared week-by-week line chart ---------- */
+const fmt1 = d3.format('.1~f');
+const avg3 = w => mean(['energy', 'mood', 'sleep'].map(k => w[k]).filter(v => !isNaN(v)));
+const ZONES = {
+  ten: [[0, 4, C3.red], [4, 7, C3.amber], [7, 10, C3.green]],
+  tenInv: [[0, 4, C3.green], [4, 7, C3.amber], [7, 10, C3.red]],
+  hundred: [[0, 40, C3.red], [40, 70, C3.amber], [70, 100, C3.green]]
+};
+
+function weekChart(box, M, o) {
+  box.innerHTML = '';
+  if (!box.clientWidth) return;
+  const rows = M.weeks;
+  const multi = o.series.length > 1;
+  let lg = null;
+  if (multi) {
+    lg = el('div', 'ad-legend');
+    o.series.forEach(s => { const sp = el('span'); const sw = el('i', 'ad-sw'); sw.style.background = s.dash ? `repeating-linear-gradient(90deg, ${s.color} 0 5px, transparent 5px 8px)` : s.color; sp.appendChild(sw); sp.append(s.name); lg.appendChild(sp); });
+    box.appendChild(lg);
+  }
+  const W = box.clientWidth, H = o.height || 170;
+  const m = { t: o.slips ? 20 : 16, r: 14, b: 24, l: o.yWidth || 30 };
+  const narrowX = (W - m.l - m.r) / rows.length < 60;
+  const lab = d => d.n === 0 ? 'Start' : (narrowX ? 'W' + d.n : d.label);
+  const x = d3.scalePoint(rows.map(d => d.label), [m.l, W - m.r]).padding(0.35);
+  const y = d3.scaleLinear([0, o.yMax], [H - m.b, m.t]);
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.label || 'Weekly trend');
+  (o.zones || []).forEach(([a, b, c]) => {
+    svg.append('rect').attr('x', m.l).attr('width', W - m.l - m.r).attr('y', y(b)).attr('height', y(a) - y(b)).attr('fill', c).attr('fill-opacity', .07);
+    svg.append('rect').attr('x', m.l - 4).attr('width', 3).attr('y', y(b) + 1).attr('height', Math.max(0, y(a) - y(b) - 2)).attr('rx', 1.5).attr('fill', c);
+  });
+  (o.ticks || y.ticks(5)).forEach(t => {
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', t ? '#2A2A2F' : '#3F3F46');
+    svg.append('text').attr('x', m.l - 9).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', '#A1A1AA').style('font-size', '11px').text((o.tickFmt || String)(t));
+  });
+  rows.forEach(d => svg.append('text').attr('x', x(d.label)).attr('y', H - 5).attr('text-anchor', 'middle').attr('fill', '#A1A1AA').style('font-size', '12px').text(lab(d)));
+  if (o.slips) rows.filter(d => d.slip).forEach(d => {
+    svg.append('line').attr('x1', x(d.label)).attr('x2', x(d.label)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', C3.red).attr('stroke-dasharray', '4 4');
+    svg.append('text').attr('x', x(d.label)).attr('y', m.t - 6).attr('text-anchor', 'middle').attr('fill', C3.red).style('font-size', '11px').style('font-weight', 600).text('Slip');
+  });
+  if (!isNaN(o.target)) {
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(o.target)).attr('y2', y(o.target)).attr('stroke', LIME).attr('stroke-width', 1.5).attr('stroke-dasharray', '5 4');
+    svg.append('text').attr('x', W - m.r).attr('y', y(o.target) - 5).attr('text-anchor', 'end').attr('fill', LIME).style('font-size', '11px').style('font-weight', 600).text('Target');
+  }
+  o.series.forEach(s => {
+    const pts = rows.map(d => ({ d, v: s.value(d) })).filter(p => !isNaN(p.v));
+    svg.append('path').datum(pts).attr('fill', 'none').attr('stroke', s.color).attr('stroke-width', s.w || 2.5)
+      .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round').attr('stroke-dasharray', s.dash ? '6 4' : null)
+      .attr('d', d3.line().x(p => x(p.d.label)).y(p => y(Math.min(p.v, o.yMax))));
+    pts.forEach(p => {
+      const fill = (!multi && o.rag) ? C3[o.rag(p.v)] : s.color;
+      svg.append('circle').attr('cx', x(p.d.label)).attr('cy', y(Math.min(p.v, o.yMax))).attr('r', multi ? 3.5 : 5).attr('fill', fill).attr('stroke', '#0A0A0B').attr('stroke-width', 2);
+      if (!multi) svg.append('text').attr('x', x(p.d.label)).attr('y', y(Math.min(p.v, o.yMax)) - 10).attr('text-anchor', 'middle').attr('fill', fill).style('font-size', '12px').style('font-weight', 600).text((o.fmt || fmt1)(p.v));
+    });
+  });
+  // tooltip: one column per week
+  const tip = el('div', 'ad-tip'); box.appendChild(tip);
+  const step = x.step();
+  const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', '#71717A').style('display', 'none');
+  rows.forEach(d => {
+    const show = () => {
+      rule.attr('x1', x(d.label)).attr('x2', x(d.label)).style('display', null);
+      tip.innerHTML = ''; tip.appendChild(el('div', 'ad-tip-h', (d.n === 0 ? 'Onboarding' : d.label) + (d.slip ? ' · slip' : '')));
+      o.series.forEach(s => {
+        const v = s.value(d); if (isNaN(v)) return;
+        const rr = el('div', 'ad-tip-r');
+        if (multi) { const sw = el('i', 'ad-sw'); sw.style.background = s.color; rr.appendChild(sw); }
+        rr.appendChild(el('span', 'ad-tip-n', s.name));
+        const b = el('b', '', (o.fmt || fmt1)(v)); const r = s.rag || o.rag; if (r) b.style.color = C3[r(v)]; rr.appendChild(b); tip.appendChild(rr);
+      });
+      tip.style.display = 'block';
+      const scale = svg.node().getBoundingClientRect().width / W, cx = x(d.label) * scale, tw = tip.offsetWidth;
+      let left = cx + 12; if (left + tw > box.clientWidth) left = cx - tw - 12;
+      tip.style.left = Math.max(0, left) + 'px'; tip.style.top = ((lg ? lg.offsetHeight : 0) + m.t * scale) + 'px';
+    };
+    svg.append('rect').attr('x', x(d.label) - step / 2).attr('width', step).attr('y', m.t).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+      .on('pointerenter', show).on('pointerdown', show).on('pointerleave', () => { tip.style.display = 'none'; rule.style('display', 'none'); });
+  });
+}
+
+/* ---------- weekly check-in ---------- */
+function drawCheckin(M) {
+  const latest = M.weeks[M.weeks.length - 1], prev = M.weeks[M.weeks.length - 2];
+  $('ci-sect').textContent = latest.n === 0 ? 'At onboarding' : 'This week · ' + latest.label;
   const tiles = $('avg-tiles'); tiles.innerHTML = '';
-  const last7 = M.daily.slice(-7);
   [['energy', 'Energy'], ['mood', 'Mood'], ['sleep', 'Sleep'], ['cravings', 'Cravings']].forEach(([k, n]) => {
-    const v = mean(last7.map(d => d[k]).filter(x => !isNaN(x)));
+    const v = latest[k], inv = k === 'cravings';
     const c = el('div', 'ad-card ad-tile');
     const h = el('div', 'ad-tile-h'); h.appendChild(el('h3', '', n)); h.appendChild(el('span', 'ad-status')); c.appendChild(h);
-    const nm = el('div', 'ad-num'); nm.appendChild(document.createTextNode(isNaN(v) ? '—' : d3.format('.1f')(v) + ' ')); nm.appendChild(el('span', 'ad-unit', '/ 10')); c.appendChild(nm);
-    if (k === 'cravings') c.appendChild(el('div', 'ad-sub', 'Lower is better'));
+    const nm = el('div', 'ad-num'); nm.appendChild(document.createTextNode(isNaN(v) ? '—' : fmt1(v) + ' ')); nm.appendChild(el('span', 'ad-unit', '/ 10')); c.appendChild(nm);
+    const sub = el('div', 'ad-sub');
+    if (prev && !isNaN(v) && !isNaN(prev[k])) {
+      const ch = v - prev[k]; const good = inv ? ch < 0 : ch > 0;
+      const b = el('b', '', ch === 0 ? 'No change' : d3.format('+.1~f')(ch)); b.style.color = ch === 0 ? 'var(--muted)' : (good ? LIME : C3.red); sub.appendChild(b);
+      if (ch !== 0) sub.append(' on last week');
+    }
+    if (inv) sub.append((sub.childNodes.length ? ' · ' : '') + 'lower is better');
+    c.appendChild(sub);
     tiles.appendChild(c);
-    setStatus(c, isNaN(v) ? null : (k === 'cravings' ? RAG.tenInv(v) : RAG.ten(v)));
+    setStatus(c, isNaN(v) ? null : (inv ? RAG.tenInv(v) : RAG.ten(v)));
   });
-
-  const box = $('daily-chart'); box.innerHTML = '';
-  const rows = M.series;
-  if (rows.length < 2) { emptyMsg(box, 'No daily check-ins logged yet. Add rows to the Daily tab and they will show here.'); return; }
-  if (!box.clientWidth) return;
-  const series = [
-    { k: 'energy', n: 'Energy', c: LIME, w: 2.5 }, { k: 'mood', n: 'Mood', c: '#FFFFFF', w: 2 },
-    { k: 'sleep', n: 'Sleep', c: '#7DD3FC', w: 2 }, { k: 'cravings', n: 'Cravings', c: '#C084FC', w: 2, dash: true }
-  ];
-  const lg = el('div', 'ad-legend');
-  series.forEach(s => { const sp = el('span'); const sw = el('i', 'ad-sw'); sw.style.background = s.dash ? `repeating-linear-gradient(90deg, ${s.c} 0 5px, transparent 5px 8px)` : s.c; sp.appendChild(sw); sp.append(s.n + (s.dash ? ' (lower is better)' : '')); lg.appendChild(sp); });
-  box.appendChild(lg);
-  const W = box.clientWidth, H = 270, m = { t: 18, r: 12, b: 24, l: 30 };
-  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Daily energy, mood, sleep and cravings');
-  const x = d3.scaleTime(d3.extent(rows, d => d.date), [m.l, W - m.r]);
-  const y = d3.scaleLinear([0, 10], [H - m.b, m.t]);
-  [[0, 4, C3.red], [4, 7, C3.amber], [7, 10, C3.green]].forEach(([a, b, c]) => {
-    svg.append('rect').attr('x', m.l).attr('width', W - m.l - m.r).attr('y', y(b)).attr('height', y(a) - y(b)).attr('fill', c).attr('fill-opacity', .07);
-    svg.append('rect').attr('x', m.l - 4).attr('width', 3).attr('y', y(b) + 1).attr('height', y(a) - y(b) - 2).attr('rx', 1.5).attr('fill', c);
+  const box = $('weekly-chart');
+  if (M.weeks.length < 2) { emptyMsg(box, 'No weeks logged yet. Add a week to the Weekly tab and his check-in shows here.'); return; }
+  weekChart(box, M, {
+    height: 270, yMax: 10, ticks: [0, 2, 4, 6, 8, 10], zones: ZONES.ten, slips: true, label: 'Weekly energy, mood, sleep and cravings',
+    series: [
+      { name: 'Energy', color: LIME, value: d => d.energy, rag: RAG.ten },
+      { name: 'Mood', color: '#FFFFFF', value: d => d.mood, rag: RAG.ten },
+      { name: 'Sleep', color: '#7DD3FC', value: d => d.sleep, rag: RAG.ten },
+      { name: 'Cravings (lower is better)', color: '#C084FC', dash: true, w: 2, value: d => d.cravings, rag: RAG.tenInv }
+    ]
   });
-  [0, 2, 4, 6, 8, 10].forEach(t => {
-    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', t ? '#2A2A2F' : '#3F3F46');
-    svg.append('text').attr('x', m.l - 9).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', '#A1A1AA').style('font-size', '12px').text(t);
-  });
-  const xa = svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - m.l) / 90))).tickFormat(fmtD).tickSize(0).tickPadding(8));
-  xa.attr('font-size', null).attr('font-family', null); xa.select('.domain').remove();
-  xa.selectAll('text').attr('fill', '#A1A1AA').style('font-size', '12px');
-  rows.filter(d => !d.onboarding && isNo(d.clean)).forEach(d => {
-    svg.append('line').attr('x1', x(d.date)).attr('x2', x(d.date)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', C3.red).attr('stroke-dasharray', '4 4');
-    svg.append('text').attr('x', x(d.date) + 4).attr('y', m.t).attr('dy', '0.7em').attr('fill', C3.red).style('font-size', '12px').style('font-weight', 600).text('Slip');
-  });
-  series.forEach(s => {
-    svg.append('path').datum(rows.filter(d => !isNaN(d[s.k]))).attr('fill', 'none').attr('stroke', s.c).attr('stroke-width', s.w)
-      .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round').attr('stroke-dasharray', s.dash ? '6 4' : null)
-      .attr('d', d3.line().x(d => x(d.date)).y(d => y(d[s.k])));
-  });
-  const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', '#71717A').style('display', 'none');
-  const dots = series.map(s => svg.append('circle').attr('r', 4).attr('fill', s.c).attr('stroke', '#0A0A0B').attr('stroke-width', 1.5).style('display', 'none'));
-  const tip = el('div', 'ad-tip'); box.appendChild(tip);
-  const bis = d3.bisector(d => d.date).center;
-  const move = ev => {
-    const [px] = d3.pointer(ev);
-    const d = rows[bis(rows, x.invert(px))]; const cx = x(d.date);
-    rule.attr('x1', cx).attr('x2', cx).style('display', null);
-    dots.forEach((c, i) => { const v = d[series[i].k]; c.attr('cx', cx).attr('cy', y(isNaN(v) ? 0 : v)).style('display', isNaN(v) ? 'none' : null); });
-    tip.innerHTML = '';
-    tip.appendChild(el('div', 'ad-tip-h', (d.onboarding ? 'Onboarding · ' : '') + fmtD(d.date) + (!d.onboarding && isNo(d.clean) ? ' · slip' : '')));
-    series.forEach(s => {
-      const v = d[s.k]; if (isNaN(v)) return;
-      const st = s.k === 'cravings' ? RAG.tenInv(v) : RAG.ten(v);
-      const rr = el('div', 'ad-tip-r'); const sw = el('i', 'ad-sw'); sw.style.background = s.c; rr.appendChild(sw);
-      rr.appendChild(el('span', 'ad-tip-n', s.n)); const bv = el('b', '', String(v)); bv.style.color = C3[st]; rr.appendChild(bv); tip.appendChild(rr);
-    });
-    if (d.note && !d.onboarding) { const nt = el('div', 'ad-tip-h', '“' + d.note + '”'); nt.style.marginTop = '4px'; nt.style.fontStyle = 'italic'; tip.appendChild(nt); }
-    tip.style.display = 'block';
-    const scale = svg.node().getBoundingClientRect().width / W, bw = box.clientWidth, tw = tip.offsetWidth;
-    let left = cx * scale + 12; if (left + tw > bw) left = cx * scale - tw - 12;
-    tip.style.left = Math.max(0, left) + 'px'; tip.style.top = (lg.offsetHeight + m.t * scale) + 'px';
-  };
-  const hide = () => { tip.style.display = 'none'; rule.style('display', 'none'); dots.forEach(c => c.style('display', 'none')); };
-  svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
-    .on('pointermove', move).on('pointerdown', move).on('pointerleave', hide);
 }
 
 /* ---------- progress ---------- */
-function drawProgress(M) {
-  const g = $('goals'); g.innerHTML = '';
-  M.goals.forEach((x, i) => {
-    const st = RAG.share(x.progress);
-    const c = el('div', 'ad-card ad-tile');
-    const hd = el('div', 'ad-tile-h'); hd.appendChild(el('h3', '', 'Goal ' + (i + 1))); hd.appendChild(el('span', 'ad-status')); c.appendChild(hd);
-    c.appendChild(el('div', 'ad-goal-name', x.goal));
-    c.appendChild(el('div', 'ad-num', d3.format('.0%')(x.progress)));
-    c.appendChild(el('div', 'ad-sub', 'of the way to target'));
-    const mtr = el('div', 'ad-meter ' + st); const bar = el('i'); mtr.appendChild(bar); c.appendChild(mtr);
-    g.appendChild(c); setStatus(c, st);
-    requestAnimationFrame(() => { bar.style.width = Math.round(x.progress * 100) + '%'; });
-  });
+function ringCard(parent, o) {
+  const c = el('div', 'ad-ringcard');
+  c.appendChild(el('div', 'gn', o.n));
+  c.appendChild(el('div', 'gt', o.title));
+  const rb = el('div', 'ad-ringbox'); c.appendChild(rb);
+  const S = 132, R = 56, Cc = 2 * Math.PI * R;
+  const svg = d3.select(rb).append('svg').attr('width', S).attr('height', S).attr('viewBox', `0 0 ${S} ${S}`).attr('aria-hidden', 'true');
+  svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', '#26262B').attr('stroke-width', 11);
+  if (o.fill > 0) {
+    const arc = svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', o.color).attr('stroke-width', 11)
+      .attr('stroke-linecap', 'round').attr('transform', `rotate(-90 ${S / 2} ${S / 2})`).attr('stroke-dasharray', Cc).attr('stroke-dashoffset', Cc * (1 - Math.min(1, o.fill)));
+    if (!window.ringsDone && matchMedia('(prefers-reduced-motion: no-preference)').matches)
+      arc.attr('stroke-dashoffset', Cc).transition().duration(900).ease(d3.easeCubicOut).attr('stroke-dashoffset', Cc * (1 - Math.min(1, o.fill)));
+  }
+  const ctr = el('div', 'c'); const v = el('div', 'v', o.value); if (o.valueColor) v.style.color = o.valueColor; ctr.appendChild(v); ctr.appendChild(el('div', 'u', o.unit)); rb.appendChild(ctr);
+  const st = el('span', 'ad-status'); c.appendChild(st); setStatus(st, o.status || null);
+  c.appendChild(el('div', 'sub', o.sub));
+  parent.appendChild(c);
+}
 
+function drawProgress(M) {
+  const latest = M.weeks[M.weeks.length - 1], start = M.weeks[0];
+  const logged = M.weeks.filter(w => w.n > 0);
+  const g = $('goals'); g.innerHTML = '';
+
+  // Goal 1: health — energy, mood and sleep this week vs target 8
+  const hNow = avg3(latest), hStart = avg3(start);
+  ringCard(g, { n: 'Goal 1', title: 'Health', fill: isNaN(hNow) ? 0 : hNow / 8, color: C3[RAG.ten(hNow)], value: isNaN(hNow) ? '—' : fmt1(hNow),
+    unit: 'out of 10 · target 8', status: isNaN(hNow) ? null : RAG.ten(hNow),
+    sub: `Energy, mood and sleep this week. Started at ${isNaN(hStart) ? '—' : fmt1(hStart)}.` });
+
+  // Goal 2: clean living — share of days clean since onboarding
+  const share = M.daysLogged ? M.cleanDays / M.daysLogged : NaN;
+  const cst = isNaN(share) ? null : share >= 0.9 ? 'green' : share >= 0.7 ? 'amber' : 'red';
+  ringCard(g, { n: 'Goal 2', title: 'Clean living', fill: isNaN(share) ? 0 : share, color: cst ? C3[cst] : '#3F3F46', value: String(M.cleanDays),
+    unit: 'clean days', status: cst,
+    sub: isNaN(share) ? 'Fills in as days are logged.' : `${d3.format('.0%')(share)} of days clean. Cravings ${fmt1(start.cravings)} → ${fmt1(latest.cravings)}.` });
+
+  // Goal 3: connection & trust — from the monthly re-score
+  const ct = M.areas.filter(a => a.goal === 'Connection & trust');
+  const ctDone = ct.some(a => a.rescored);
+  if (ctDone) {
+    const nowAvg = mean(ct.map(a => a.now)), fillAvg = mean(ct.map(a => Math.min(1, a.now / a.target)));
+    ringCard(g, { n: 'Goal 3', title: 'Connection & trust', fill: fillAvg, color: C3[RAG.ten(nowAvg)], value: fmt1(nowAvg), unit: 'out of 10',
+      status: RAG.ten(nowAvg), sub: ct.map(a => `${a.area} ${fmt1(a.onboarding)} → ${fmt1(a.now)}`).join(' · ') });
+  } else {
+    ringCard(g, { n: 'Goal 3', title: 'Connection & trust', fill: 0, color: '#3F3F46', value: '—', valueColor: 'var(--muted)', unit: 'not re-scored yet',
+      sub: 'Fills in at his first monthly re-score.' });
+  }
+
+  // Goal 4: new life — hobby sessions this week vs target
+  const tgt = SETTINGS.hobbyTarget;
+  if (latest.n > 0) {
+    const onTarget = logged.filter(w => w.hobby >= tgt).length;
+    ringCard(g, { n: 'Goal 4', title: 'New life', fill: latest.hobby / tgt, color: C3[RAG.hobby(latest.hobby)], value: String(latest.hobby),
+      unit: 'hobby sessions this week', status: RAG.hobby(latest.hobby), sub: `Target ${tgt} a week. On target ${onTarget} of ${logged.length} weeks.` });
+  } else {
+    ringCard(g, { n: 'Goal 4', title: 'New life', fill: 0, color: '#3F3F46', value: '—', valueColor: 'var(--muted)', unit: 'hobby sessions', sub: `Target ${tgt} a week.` });
+  }
+  window.ringsDone = true;
+
+  // Trends
+  const tr = $('trends'); tr.innerHTML = '';
+  if (M.weeks.length < 2) { emptyMsg(tr, 'Trends appear once the first week is logged.'); }
+  else {
+    const cards = [
+      { title: "Adrian's score", now: latest.score, nowRag: RAG.hundred, fmt: d3.format('d'),
+        opt: { yMax: 100, ticks: [0, 40, 70, 100], zones: ZONES.hundred, rag: RAG.hundred, fmt: d3.format('d'), label: 'Weekly score', series: [{ name: 'Score', color: '#E4E4E7', value: d => d.score }] } },
+      { title: 'Energy, mood & sleep', now: avg3(latest), nowRag: RAG.ten,
+        opt: { yMax: 10, ticks: [0, 4, 7, 10], zones: ZONES.ten, rag: RAG.ten, target: 8, label: 'Average of energy, mood and sleep', series: [{ name: 'Average', color: '#E4E4E7', value: avg3 }] } },
+      { title: 'Cravings (lower is better)', now: latest.cravings, nowRag: RAG.tenInv,
+        opt: { yMax: 10, ticks: [0, 4, 7, 10], zones: ZONES.tenInv, rag: RAG.tenInv, target: 2, label: 'Weekly cravings', series: [{ name: 'Cravings', color: '#E4E4E7', value: d => d.cravings }] } },
+      { title: 'Hobby sessions', now: latest.hobby, nowRag: RAG.hobby, fmt: d3.format('d'),
+        opt: { yMax: Math.max(4, d3.max(M.weeks, d => d.hobby || 0) + 1), zones: null, rag: RAG.hobby, target: tgt, fmt: d3.format('d'), label: 'Hobby sessions each week', series: [{ name: 'Sessions', color: '#E4E4E7', value: d => d.hobby }] } },
+      { title: 'Triggers navigated', now: latest.share * 100, nowRag: v => v >= 100 ? 'green' : v >= 50 ? 'amber' : 'red', fmt: v => d3.format('.0f')(v) + '%',
+        opt: { yMax: 100, ticks: [0, 50, 100], tickFmt: v => v + '%', yWidth: 40, rag: v => v >= 100 ? 'green' : v >= 50 ? 'amber' : 'red', fmt: v => d3.format('.0f')(v) + '%', label: 'Share of triggers navigated', series: [{ name: 'Navigated', color: '#E4E4E7', value: d => d.n === 0 ? NaN : d.share * 100 }] } }
+    ];
+    cards.forEach(cd => {
+      const c = el('div', 'ad-trend');
+      const h = el('div', 'ad-trend-h'); h.appendChild(el('h3', '', cd.title));
+      const nw = el('div', 'now'); nw.append('This week '); const b = el('b', '', isNaN(cd.now) ? '—' : (cd.fmt || fmt1)(cd.now)); if (!isNaN(cd.now)) b.style.color = C3[cd.nowRag(cd.now)]; nw.appendChild(b); h.appendChild(nw);
+      c.appendChild(h);
+      const bx = el('div', 'box'); c.appendChild(bx); tr.appendChild(c);
+      weekChart(bx, M, cd.opt);
+    });
+  }
+
+  drawAreas(M);
+}
+
+/* ---------- where he started, where he is now ---------- */
+function drawAreas(M) {
   const box = $('areas-chart'); box.innerHTML = '';
   if (!M.areas.length) { emptyMsg(box, 'No baseline scores found in the Baseline tab.'); return; }
   if (!box.clientWidth) return;
@@ -540,7 +685,7 @@ function drawProgress(M) {
   let labW = 0;
   items.filter(i => !i.head).forEach(i => { const t = svg.append('text').style('font-size', '14px').text(i.area); labW = Math.max(labW, t.node().getComputedTextLength()); t.remove(); });
   const narrow = W < 420;
-  const x0 = Math.min(labW + 14, W * 0.42), x1 = W - (narrow ? 8 : 64);
+  const x0 = Math.min(labW + 14, W * 0.42), x1 = W - (narrow ? 8 : 104);
   const x = d3.scaleLinear([0, 10], [x0, x1]);
   [0, 4, 7, 10].forEach(t => svg.append('text').attr('x', x(t)).attr('y', H - 4).attr('text-anchor', 'middle').attr('fill', '#A1A1AA').style('font-size', '12px').text(t));
   const tip = el('div', 'ad-tip'); box.appendChild(tip);
@@ -548,6 +693,7 @@ function drawProgress(M) {
     if (it.head) { svg.append('text').attr('x', 0).attr('y', it.y).attr('fill', LIME).style('font-size', '12px').style('text-transform', 'uppercase').style('letter-spacing', '.12em').style('font-weight', 600).text(it.head); return; }
     const zones = it.inv ? [[0, 4, C3.green], [4, 7, C3.amber], [7, 10, C3.red]] : [[0, 4, C3.red], [4, 7, C3.amber], [7, 10, C3.green]];
     const rate = v => it.inv ? RAG.tenInv(v) : RAG.ten(v);
+    const updated = it.weekly || it.rescored;
     const st = rate(it.now);
     const gr = svg.append('g');
     gr.append('rect').attr('x', 0).attr('y', it.y - rowH / 2).attr('width', W).attr('height', rowH).attr('fill', 'transparent');
@@ -556,12 +702,13 @@ function drawProgress(M) {
     gr.append('line').attr('x1', x(it.onboarding)).attr('x2', x(it.now)).attr('y1', it.y).attr('y2', it.y).attr('stroke', '#FFFFFF').attr('stroke-width', 2).attr('stroke-opacity', .5);
     if (!isNaN(it.target)) gr.append('line').attr('x1', x(it.target)).attr('x2', x(it.target)).attr('y1', it.y - 10).attr('y2', it.y + 10).attr('stroke', LIME).attr('stroke-width', 2.5).attr('stroke-linecap', 'round');
     gr.append('circle').attr('cx', x(it.onboarding)).attr('cy', it.y).attr('r', 4.5).attr('fill', '#161618').attr('stroke', '#A1A1AA').attr('stroke-width', 1.5);
-    gr.append('circle').attr('cx', x(it.now)).attr('cy', it.y).attr('r', 7).attr('fill', C3[st]).attr('stroke', '#161618').attr('stroke-width', 2);
-    if (!narrow) gr.append('text').attr('x', W - 2).attr('y', it.y).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', C3[st]).style('font-size', '12px').style('font-weight', 600).text(it.onboarding + ' → ' + it.now);
+    if (updated) gr.append('circle').attr('cx', x(it.now)).attr('cy', it.y).attr('r', 7).attr('fill', C3[st]).attr('stroke', '#161618').attr('stroke-width', 2);
+    if (!narrow) gr.append('text').attr('x', W - 2).attr('y', it.y).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', updated ? C3[st] : '#71717A').style('font-size', '12px').style('font-weight', updated ? 600 : 400)
+      .text(updated ? fmt1(it.onboarding) + ' → ' + fmt1(it.now) : 'Re-score due');
     const show = () => {
       tip.innerHTML = ''; tip.appendChild(el('div', 'ad-tip-h', it.area + (it.inv ? ' (lower is better)' : '')));
-      [['Onboarding', it.onboarding, rate(it.onboarding)], ['Now', it.now, st], ['Target', it.target, null]].forEach(([n, v, s]) => {
-        const rr = el('div', 'ad-tip-r'); rr.appendChild(el('span', 'ad-tip-n', n)); const b = el('b', '', v + ' / 10'); b.style.color = s ? C3[s] : LIME; rr.appendChild(b); tip.appendChild(rr);
+      [['Onboarding', it.onboarding, rate(it.onboarding)], updated ? [it.weekly ? 'This week' : 'Latest re-score', it.now, st] : ['Now', 'Re-score due', null], ['Target', it.target, null]].forEach(([n, v, s]) => {
+        const rr = el('div', 'ad-tip-r'); rr.appendChild(el('span', 'ad-tip-n', n)); const b = el('b', '', typeof v === 'number' ? fmt1(v) + ' / 10' : v); b.style.color = s ? C3[s] : (typeof v === 'number' ? LIME : '#A1A1AA'); rr.appendChild(b); tip.appendChild(rr);
       });
       tip.style.display = 'block';
       const scale = svg.node().getBoundingClientRect().width / W;
@@ -593,7 +740,7 @@ function drawLog(M) {
 }
 
 /* ---------- wiring ---------- */
-function drawAll() { if (!MODEL) return; drawOverview(MODEL); drawDaily(MODEL); drawProgress(MODEL); drawLog(MODEL); }
+function drawAll() { if (!MODEL) return; drawOverview(MODEL); drawCheckin(MODEL); drawProgress(MODEL); drawLog(MODEL); }
 document.querySelectorAll('.ad-tab').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('.ad-tab').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
   document.querySelectorAll('.ad-pane').forEach(p => { p.hidden = p.id !== btn.dataset.tab; });
@@ -601,7 +748,7 @@ document.querySelectorAll('.ad-tab').forEach(btn => btn.addEventListener('click'
   drawAll();
 }));
 const startTab = location.hash.slice(1);
-if (['overview', 'daily', 'progress', 'log'].includes(startTab)) document.querySelector(`.ad-tab[data-tab="${startTab}"]`).click();
+if (['overview', 'checkin', 'progress', 'log'].includes(startTab)) document.querySelector(`.ad-tab[data-tab="${startTab}"]`).click();
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 150); });
 
 async function load() {
