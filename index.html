@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-AU">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0A0A0B">
+<meta name="theme-color" content="#0B0B0B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Adrian">
@@ -11,140 +11,168 @@
 <title>Adrian's Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <style>
+/* Layout: matches Jamie's dashboard and the nottodayderek.com.au site — fluoro strap, stacked logo, underline tabs, single dark column.
+   Deliberately single dark look to match the Not Today Derek website and workshop suite. */
 :root {
-  /* ===== Not Today Derek brand ===== */
-  --lime: #C6F432; --bg: #0A0A0B; --char: #161618; --char-2: #1F1F23; --line: #2A2A2F; --line-2: #3F3F46;
-  --fg: #FFFFFF; --fg-2: #D4D4D8; --muted: #A1A1AA;
-  /* ===== Traffic lights (scores and scales only) ===== */
-  --red: #EF4444; --amber: #F59E0B; --green: #22C55E;
-  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --serif: 'Fraunces', Georgia, serif;
-  --fs-cap: 12px; --fs-body: 14px; --fs-head: 16px; --fs-title: 28px;
-  --r: 12px; --gap-xs: 4px; --gap-sm: 8px; --gap-md: 12px; --gap-lg: 20px; --gap-xl: 28px;
-  --pad-lg: 20px; --pad-xl: 28px;
+  /* ===== Not Today Derek brand (same as Jamie's dashboard) ===== */
+  --black: #0B0B0B; --panel: #161616; --panel-2: #2A2A2A; --line: #333333;
+  --grey: #9A9A9A; --white: #FFFFFF; --orange: #FF5F1F; --fluoro: #E6FF00;
+  /* ===== Score bands (scores and scales only) ===== */
+  --good: #E6FF00; --mid: #FF9A5C; --low: #FF5F1F;
+  --display: "Archivo", "Arial Black", Arial, sans-serif;
+  --body: "Barlow", Arial, Helvetica, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  /* older names the page still uses, pointed at the brand */
+  --lime: var(--fluoro); --bg: var(--black); --char: var(--panel); --char-2: var(--panel-2); --line-2: var(--line);
+  --fg: var(--white); --fg-2: #E5E5E5; --muted: var(--grey);
+  --red: var(--low); --amber: var(--mid); --green: var(--good);
+  --fs-cap: 12px; --fs-body: 15px; --fs-head: 17px; --fs-title: 22px;
+  --r: 4px; --gap-xs: 4px; --gap-sm: 8px; --gap-md: 16px; --gap-lg: 20px; --gap-xl: 28px;
+  --pad-lg: 20px; --pad-xl: 24px;
+  color-scheme: dark;
 }
-* { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
-body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom)); }
-.ad-in { max-width: 68rem; margin-inline: auto; display: grid; gap: var(--gap-lg); }
-@media (min-width: 48rem) { body { padding: 40px 32px 56px; } }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: var(--black); color: var(--white); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--black); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 
-.ad-brand { display: flex; align-items: center; gap: 8px; font-size: var(--fs-cap); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); font-weight: 600; }
-.ad-brand i { width: 10px; height: 10px; border-radius: 2px; background: var(--lime); display: inline-block; }
-.ad-head h1 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-title); margin: var(--gap-xs) 0; }
-.ad-take { margin: 0; font-size: var(--fs-body); color: var(--fg-2); line-height: 1.5; }
-.ad-take b { font-weight: 600; color: var(--fg); }
-.ad-take b.ad-hl { color: var(--lime); }
-.ad-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-sm) var(--gap-lg); margin-top: var(--gap-sm); }
-.ad-updated { font-size: var(--fs-cap); color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
-.ad-refresh { appearance: none; background: var(--char); color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: var(--fs-cap); cursor: pointer; }
-.ad-refresh:hover { color: var(--lime); border-color: var(--lime); }
-.ad-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-cap); color: var(--muted); }
+/* Brand bands */
+.strap { background: var(--fluoro); color: var(--black); }
+.strap .wrap { padding-block: 8px; font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+.ad-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding-block: 24px 14px; }
+.logo { font-family: var(--display); font-weight: 900; font-size: clamp(28px, 6vw, 42px); line-height: .9; letter-spacing: -.02em; text-transform: uppercase; }
+.logo span { color: var(--orange); }
+.who { text-align: right; color: var(--grey); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.who b { display: block; color: var(--white); font-family: var(--display); font-size: 20px; letter-spacing: 0; text-transform: none; font-weight: 800; }
+.ad-updated { font-size: 10px; letter-spacing: .14em; }
+.ad-refresh { appearance: none; margin-top: 8px; background: var(--orange); color: var(--black); border: 0; border-radius: 2px; padding: 7px 14px; font-family: var(--display); font-weight: 900; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.ad-refresh:hover { background: var(--fluoro); }
+.ad-refresh:disabled { opacity: .5; cursor: progress; }
+.ad-intro { display: grid; gap: 10px; padding-block: 0 18px; }
+.ad-take { margin: 0; font-size: var(--fs-body); color: var(--grey); line-height: 1.5; max-width: 70ch; }
+.ad-take b { font-weight: 600; color: var(--white); }
+.ad-take b.ad-hl { color: var(--fluoro); }
+.ad-key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--grey); }
 .ad-key span { display: inline-flex; align-items: center; gap: 6px; }
-.ad-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
-.ad-dot.red { background: var(--red); } .ad-dot.amber { background: var(--amber); } .ad-dot.green { background: var(--green); }
-.ad-banner { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.4); color: #FCA5A5; border-radius: var(--r); padding: 12px 16px; font-size: var(--fs-body); }
-.ad-banner[hidden] { display: none; }
+.ad-dot { width: 10px; height: 10px; border-radius: 1px; display: inline-block; flex: none; }
+.ad-dot.red { background: var(--low); } .ad-dot.amber { background: var(--mid); } .ad-dot.green { background: var(--good); }
+.ad-banner { background: var(--orange); color: var(--black); font-weight: 600; }
+.ad-banner .wrap { padding-block: 10px; font-size: 14px; }
 
-.ad-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--char); border: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; position: sticky; top: 8px; z-index: 3; }
+/* Tabs */
+nav.ad-nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--black); border-bottom: 1px solid var(--line); }
+.ad-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 .ad-tabs::-webkit-scrollbar { display: none; }
-.ad-tab { flex: 1 0 auto; appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: var(--fs-body); font-weight: 500; padding: 9px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
-.ad-tab:hover { color: var(--fg); }
-.ad-tab[aria-selected=true] { background: var(--lime); color: #0A0A0B; }
+.ad-tab { flex: none; appearance: none; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--grey); font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; padding: 14px 12px; cursor: pointer; white-space: nowrap; }
+.ad-tab:hover { color: var(--white); }
+.ad-tab[aria-selected=true] { color: var(--white); border-bottom-color: var(--orange); }
+.ad-tab:focus-visible, .ad-refresh:focus-visible { outline: 2px solid var(--fluoro); outline-offset: 2px; }
+
+/* Page */
+.ad-in { padding-block: 24px 48px; display: grid; gap: var(--gap-lg); }
 .ad-pane { display: grid; gap: var(--gap-lg); }
-.ad-pane[hidden] { display: none; }
+.ad-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: var(--pad-lg); min-width: 0; }
+.ad-card > h2 { font-family: var(--display); font-weight: 800; font-size: var(--fs-title); margin: 0; text-wrap: balance; }
+.ad-note { margin: 6px 0 var(--gap-md); font-size: 13px; color: var(--grey); line-height: 1.5; max-width: 72ch; }
+.ad-sect { font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); margin: 0 0 calc(-1 * var(--gap-sm)); }
+.ad-empty { color: var(--grey); font-size: var(--fs-body); padding: 24px 0; text-align: center; }
+.ad-in svg text { font-family: var(--mono); }
+.ad-in svg text.ad-lbl { font-family: var(--body); font-weight: 500; }
+.ad-in svg text.ad-hd { font-family: var(--display); font-weight: 800; }
 
-.ad-card { background: var(--char); border: 1px solid var(--line); border-radius: calc(var(--r) * 1.5); padding: var(--pad-lg); min-width: 0; }
-.ad-card h2 { font-size: var(--fs-head); font-weight: 500; margin: 0; }
-.ad-note { margin: var(--gap-xs) 0 var(--gap-md); font-size: var(--fs-cap); color: var(--muted); line-height: 1.5; }
-.ad-sect { font-size: var(--fs-cap); color: var(--muted); text-transform: uppercase; letter-spacing: .14em; margin: 0 0 calc(-1 * var(--gap-sm)); }
-.ad-empty { color: var(--muted); font-size: var(--fs-body); padding: 24px 0; text-align: center; }
-
-.ad-hero { background: linear-gradient(140deg, var(--char-2), var(--char) 60%); border: 1px solid var(--line); border-radius: calc(var(--r) * 2); padding: var(--pad-xl); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: var(--gap-xl); align-items: center; position: relative; overflow: hidden; }
-.ad-hero::after { content: ""; position: absolute; right: -6rem; top: -6rem; width: 18rem; height: 18rem; border-radius: 50%; background: radial-gradient(circle, rgba(198,244,50,.14), rgba(198,244,50,0) 70%); pointer-events: none; }
+/* Score hero */
+.ad-hero { background: var(--panel-2); border-left: 6px solid var(--band, var(--fluoro)); border-radius: var(--r); padding: var(--pad-xl); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: var(--gap-xl); align-items: center; }
 .ad-hero-l { display: flex; align-items: center; gap: var(--gap-lg); flex-wrap: wrap; }
 .ad-ring { position: relative; width: 168px; height: 168px; flex: none; }
 .ad-ring svg { display: block; }
 .ad-ring-n { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.ad-big { font-family: var(--serif); font-weight: 400; font-size: 3.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
-.ad-ring-n small { color: var(--muted); font-size: var(--fs-cap); margin-top: 2px; }
-.ad-hero-label { font-size: var(--fs-cap); color: var(--muted); text-transform: uppercase; letter-spacing: .12em; }
-.ad-hero h2 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-title); margin: 4px 0 var(--gap-sm); }
-.ad-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.ad-chip { background: var(--bg); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px; font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
-.ad-chip b { color: var(--fg); font-weight: 600; }
-.ad-chip b.ad-pos { color: var(--lime); } .ad-chip b.ad-neg { color: var(--red); }
-.ad-status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cap); font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-.ad-status.red { color: var(--red); background: rgba(239,68,68,.12); }
-.ad-status.amber { color: var(--amber); background: rgba(245,158,11,.12); }
-.ad-status.green { color: var(--green); background: rgba(34,197,94,.12); }
+.ad-big { font-family: var(--display); font-weight: 900; font-size: 3.6rem; line-height: .9; font-variant-numeric: tabular-nums; color: var(--white); }
+.ad-ring-n small { color: var(--grey); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; margin-top: 6px; }
+.ad-hero-label { font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--fluoro); }
+.ad-hero h2 { font-family: var(--display); font-weight: 800; font-size: var(--fs-title); margin: 4px 0 var(--gap-sm); }
+.ad-chips { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.ad-chip { color: var(--grey); font-size: 14px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
+.ad-chip b { color: var(--white); font-weight: 600; }
+.ad-chip b.ad-pos { color: var(--fluoro); } .ad-chip b.ad-neg { color: var(--orange); }
+.ad-status { display: inline-flex; align-items: center; font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; border-radius: 2px; padding: 4px 9px; white-space: nowrap; background: var(--panel-2); color: var(--white); }
+.ad-status .ad-dot { display: none; }
+.ad-status.red { background: var(--low); color: var(--black); }
+.ad-status.amber { background: var(--mid); color: var(--black); }
+.ad-status.green { background: var(--good); color: var(--black); }
 .ad-status:empty { display: none; }
 .ad-hero-r { min-width: 0; }
 .ad-spark { position: relative; min-height: 150px; }
-.ad-quote { margin: var(--gap-md) 0 0; padding-left: 12px; border-left: 3px solid var(--lime); color: var(--fg-2); font-style: italic; font-size: var(--fs-body); }
-.ad-quote .lbl { display: block; font-style: normal; color: var(--lime); font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 2px; }
-.ad-quote[hidden] { display: none; }
+.ad-quote { margin: var(--gap-md) 0 0; padding-left: 14px; border-left: 3px solid var(--orange); color: var(--white); font-size: 16px; font-weight: 500; line-height: 1.4; }
+.ad-quote .lbl { display: block; font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); margin-bottom: 4px; }
 
+/* Stat tiles */
 .ad-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--gap-md); }
-.ad-tile { border-top: 3px solid var(--lime); display: flex; flex-direction: column; gap: 2px; }
-.ad-tile.red { border-top-color: var(--red); } .ad-tile.amber { border-top-color: var(--amber); } .ad-tile.green { border-top-color: var(--green); }
+.ad-tile { border-top: 3px solid var(--orange); border-radius: 0 0 var(--r) var(--r); display: flex; flex-direction: column; gap: 2px; }
+.ad-tile.red { border-top-color: var(--low); } .ad-tile.amber { border-top-color: var(--mid); } .ad-tile.green { border-top-color: var(--good); }
 .ad-tile-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-.ad-tile h2, .ad-tile h3 { font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0; font-weight: 600; }
-.ad-num { font-family: var(--serif); font-weight: 400; font-size: var(--fs-title); font-variant-numeric: tabular-nums; margin: var(--gap-sm) 0 var(--gap-xs); }
-.ad-num .ad-unit { font-family: var(--sans); font-size: var(--fs-body); color: var(--muted); }
-.ad-num.ad-lime { color: var(--lime); }
-.ad-sub { font-size: var(--fs-cap); color: var(--muted); }
-.ad-meter { height: 6px; border-radius: 999px; background: var(--line); margin-top: var(--gap-sm); overflow: hidden; }
-.ad-meter i { display: block; height: 100%; border-radius: 999px; width: 0; transition: width .8s cubic-bezier(.2,.8,.2,1); }
-.ad-meter.red i { background: var(--red); } .ad-meter.amber i { background: var(--amber); } .ad-meter.green i { background: var(--green); }
+.ad-tile h2, .ad-tile h3 { font-family: var(--display); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--grey); margin: 0; font-weight: 700; }
+.ad-num { font-family: var(--display); font-weight: 900; font-size: 40px; line-height: 1.1; font-variant-numeric: tabular-nums; margin: 6px 0 4px; }
+.ad-num .ad-unit { font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--grey); }
+.ad-num.ad-lime { color: var(--fluoro); }
+.ad-sub { font-size: 13px; color: var(--grey); }
+.ad-meter { height: 8px; border-radius: 4px; background: var(--panel-2); margin-top: 12px; overflow: hidden; }
+.ad-meter i { display: block; height: 100%; width: 0; background: var(--fluoro); transition: width .6s ease; }
+.ad-meter.red i { background: var(--low); } .ad-meter.amber i { background: var(--mid); } .ad-meter.green i { background: var(--good); }
 .ad-goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--gap-md); }
-.ad-goal-name { font-size: var(--fs-body); font-weight: 500; margin-top: 4px; }
+.ad-goal-name { font-family: var(--display); font-weight: 800; font-size: 17px; margin-top: 4px; }
 
+/* Charts */
 .ad-chart { position: relative; min-height: 290px; }
 .ad-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--gap-md); }
-.ad-ringcard { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: var(--pad-lg); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
-.ad-ringcard .gn { font-size: var(--fs-cap); color: var(--lime); text-transform: uppercase; letter-spacing: .12em; font-weight: 600; }
-.ad-ringcard .gt { font-size: var(--fs-body); font-weight: 500; }
+.ad-ringcard { background: var(--black); border: 1px solid var(--line); border-radius: var(--r); padding: var(--pad-lg); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+.ad-ringcard .gn { font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); }
+.ad-ringcard .gt { font-family: var(--display); font-weight: 800; font-size: 17px; }
 .ad-ringbox { position: relative; width: 132px; height: 132px; margin: 6px 0; }
 .ad-ringbox svg { display: block; }
 .ad-ringbox .c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 18px; }
-.ad-ringbox .v { font-family: var(--serif); font-size: 2.3rem; line-height: 1; font-variant-numeric: tabular-nums; }
-.ad-ringbox .u { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.25; }
-.ad-ringcard .sub { font-size: var(--fs-cap); color: var(--muted); min-height: 2.6em; line-height: 1.45; }
+.ad-ringbox .v { font-family: var(--display); font-weight: 900; font-size: 2.3rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.ad-ringbox .u { font-size: 11px; color: var(--grey); margin-top: 4px; line-height: 1.25; }
+.ad-ringcard .sub { font-size: 13px; color: var(--grey); min-height: 2.6em; line-height: 1.45; }
 .ad-trends { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: var(--gap-md); }
-.ad-trend { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 14px 8px; min-width: 0; }
+.ad-trend { background: var(--black); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 14px 8px; min-width: 0; }
 .ad-trend-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-.ad-trend h3 { margin: 0; font-size: var(--fs-body); font-weight: 500; }
-.ad-trend .now { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ad-trend .now b { font-size: var(--fs-head); }
+.ad-trend h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 15px; }
+.ad-trend .now { font-size: 12px; color: var(--grey); font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: .04em; }
+.ad-trend .now b { font-family: var(--display); font-weight: 900; font-size: 18px; }
 .ad-trend .box { position: relative; min-height: 170px; }
 .ad-areas { position: relative; min-height: 200px; }
-.ad-legend { display: flex; flex-wrap: wrap; gap: var(--gap-xs) var(--gap-md); font-size: var(--fs-cap); color: var(--muted); margin-bottom: var(--gap-sm); }
+.ad-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--grey); margin-bottom: var(--gap-sm); }
 .ad-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .ad-sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-.ad-tip { position: absolute; pointer-events: none; background: #0A0A0B; border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: 0 8px 24px rgba(0,0,0,.5); padding: 6px 10px; font-size: var(--fs-cap); white-space: nowrap; display: none; z-index: 4; font-variant-numeric: tabular-nums; }
-.ad-tip .ad-tip-h { color: var(--muted); margin-bottom: 2px; white-space: normal; max-width: 16rem; }
+.ad-tip { position: absolute; pointer-events: none; background: var(--black); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 8px 24px rgba(0,0,0,.6); padding: 6px 10px; font-size: 12px; white-space: nowrap; display: none; z-index: 4; font-variant-numeric: tabular-nums; }
+.ad-tip .ad-tip-h { color: var(--grey); margin-bottom: 2px; white-space: normal; max-width: 16rem; }
 .ad-tip .ad-tip-r { display: flex; align-items: center; gap: 6px; }
-.ad-tip .ad-tip-n { color: var(--muted); min-width: 4.5rem; }
+.ad-tip .ad-tip-n { color: var(--grey); min-width: 4.5rem; }
 
+/* Weekly log */
 .ad-wins { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--gap-md); }
-.ad-win-card { background: var(--char); border: 1px solid var(--line); border-left: 3px solid var(--lime); border-radius: var(--r); padding: var(--pad-lg); min-height: 7rem; display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap-sm); }
-.ad-win-card .w { font-size: var(--fs-cap); color: var(--lime); text-transform: uppercase; letter-spacing: .12em; }
-.ad-win-card .t { font-family: var(--serif); font-size: var(--fs-head); line-height: 1.4; }
+.ad-win-card { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--orange); border-radius: var(--r); padding: var(--pad-lg); min-height: 7rem; display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap-sm); }
+.ad-win-card:nth-child(even) { border-left-color: var(--fluoro); }
+.ad-win-card .w { font-family: var(--display); font-weight: 800; font-size: 11px; color: var(--fluoro); text-transform: uppercase; letter-spacing: .16em; }
+.ad-win-card .t { font-size: 16px; font-weight: 500; line-height: 1.4; }
 .ad-win-card .t::before { content: '“'; } .ad-win-card .t::after { content: '”'; }
 .ad-table-wrap { overflow-x: auto; }
-.ad-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); font-variant-numeric: tabular-nums; color: var(--fg-2); }
-.ad-table th { text-align: left; font-weight: 600; font-size: var(--fs-cap); color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; text-transform: uppercase; letter-spacing: .08em; }
-.ad-table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ad-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--white); }
+.ad-table th { text-align: left; font-family: var(--display); font-weight: 700; font-size: 11px; color: var(--grey); padding: 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; text-transform: uppercase; letter-spacing: .12em; }
+.ad-table td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .ad-table .ad-n { text-align: right; }
-.ad-table td.ad-win { min-width: 14rem; font-style: italic; }
-.ad-pill { display: inline-block; min-width: 2.4rem; text-align: center; border-radius: 999px; padding: 1px 8px; font-weight: 600; }
-.ad-pill.red { color: var(--red); background: rgba(239,68,68,.14); } .ad-pill.amber { color: var(--amber); background: rgba(245,158,11,.14); } .ad-pill.green { color: var(--green); background: rgba(34,197,94,.14); }
+.ad-table td.ad-win { min-width: 14rem; color: var(--grey); }
+.ad-pill { display: inline-block; min-width: 2.4rem; text-align: center; border-radius: 2px; padding: 1px 8px; font-family: var(--display); font-weight: 800; }
+.ad-pill.red { color: var(--black); background: var(--low); } .ad-pill.amber { color: var(--black); background: var(--mid); } .ad-pill.green { color: var(--black); background: var(--good); }
 .ad-loading { opacity: .35; }
-@media (max-width: 40rem) { .ad-hide-narrow { display: none; } .ad-hero { padding: var(--pad-lg); } }
+
+footer .wrap { padding-block: 20px 32px; color: var(--grey); font-size: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 40rem) { .ad-hide-narrow { display: none; } .ad-hero { padding: var(--pad-lg); } .ad-num { font-size: 32px; } }
+@media (max-width: 480px) { .who { text-align: left; align-items: flex-start; } }
 @media (prefers-reduced-motion: no-preference) {
   .ad-pane:not([hidden]) { animation: adIn .35s cubic-bezier(.2,.8,.2,1); }
   @keyframes adIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -152,26 +180,31 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
 </style>
 </head>
 <body>
-<div class="ad-in" id="app">
-  <header class="ad-head">
-    <div class="ad-brand"><i></i>Not Today Derek</div>
-    <h1>Adrian's dashboard</h1>
+<div class="ad-banner" id="banner" hidden><div class="wrap">Couldn't load Adrian's data just now. Check your connection and hit Refresh.</div></div>
+<div class="strap"><div class="wrap">No excuses. No masks. You vs You.</div></div>
+
+<header>
+  <div class="wrap ad-head">
+    <div class="logo">Not Today<br>Derek<span>.</span></div>
+    <div class="who">One-on-one dashboard<b>Adrian</b><span class="ad-updated" id="updated"></span><button class="ad-refresh" id="refresh" type="button">Refresh</button></div>
+  </div>
+  <div class="wrap ad-intro">
     <p class="ad-take" id="takeaway">Loading Adrian's latest numbers…</p>
-    <div class="ad-meta">
-      <div class="ad-key"><span><i class="ad-dot green"></i>Firing</span><span><i class="ad-dot amber"></i>Mid range</span><span><i class="ad-dot red"></i>Needs attention</span></div>
-      <span class="ad-updated"><span id="updated"></span><button class="ad-refresh" id="refresh" type="button">Refresh</button></span>
-    </div>
-  </header>
+    <div class="ad-key"><span><i class="ad-dot green"></i>Firing</span><span><i class="ad-dot amber"></i>Mid range</span><span><i class="ad-dot red"></i>Needs attention</span></div>
+  </div>
+</header>
 
-  <div class="ad-banner" id="banner" hidden>Couldn't load Adrian's data just now. Check your connection and hit Refresh.</div>
-
-  <nav class="ad-tabs" role="tablist" aria-label="Dashboard sections">
+<nav class="ad-nav" aria-label="Dashboard sections">
+  <div class="wrap ad-tabs" role="tablist">
     <button class="ad-tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
     <button class="ad-tab" role="tab" data-tab="checkin" aria-selected="false">Weekly check-in</button>
     <button class="ad-tab" role="tab" data-tab="progress" aria-selected="false">Progress</button>
     <button class="ad-tab" role="tab" data-tab="log" aria-selected="false">Weekly log</button>
-  </nav>
+  </div>
+</nav>
 
+<main>
+<div class="wrap ad-in" id="app">
   <!-- OVERVIEW -->
   <section class="ad-pane" id="overview" role="tabpanel">
     <div class="ad-hero">
@@ -228,7 +261,7 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
     <div class="ad-tiles" id="avg-tiles"></div>
     <div class="ad-card">
       <h2>Weekly check-in</h2>
-      <p class="ad-note">One point per week, from onboarding. The coloured zones show where energy, mood and sleep sit: green is firing, amber is mid range, red needs attention. Cravings are the dashed line, and lower is better. A week with a slip is marked in red.</p>
+      <p class="ad-note">One point per week, from onboarding. The coloured zones show where energy, mood and sleep sit: yellow is firing, light orange is mid range, orange needs attention. Cravings are the dashed line, and lower is better. A week with a slip is marked with a dashed line.</p>
       <div class="ad-chart" id="weekly-chart"></div>
     </div>
   </section>
@@ -242,7 +275,7 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
     </div>
     <div class="ad-card">
       <h2>Trends</h2>
-      <p class="ad-note">Week by week since onboarding. Dots are coloured by zone, and the dashed lime line is his target.</p>
+      <p class="ad-note">Week by week since onboarding. Dots are coloured by zone, and the dashed yellow line is his target.</p>
       <div class="ad-trends" id="trends"></div>
     </div>
     <div class="ad-card">
@@ -270,6 +303,10 @@ body { padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area
     </div>
   </section>
 </div>
+</main>
+
+<footer><div class="wrap">© 2026 Not Today Derek · The DEREK. Framework · Private to Adrian and Wade.</div></footer>
+
 
 <script>
 /* ================== SETTINGS ================== */
@@ -283,8 +320,8 @@ const SETTINGS = {
 };
 /* ============================================== */
 
-const C3 = { red: '#EF4444', amber: '#F59E0B', green: '#22C55E' };
-const LIME = '#C6F432';
+const C3 = { red: '#FF5F1F', amber: '#FF9A5C', green: '#E6FF00' };
+const LIME = '#E6FF00';
 const RAG = {
   label: { red: 'Needs attention', amber: 'Mid range', green: 'Firing' },
   ten: v => v >= 7 ? 'green' : v >= 4 ? 'amber' : 'red',
@@ -409,7 +446,7 @@ function drawOverview(M) {
     t.append('Adrian starts at '); b(String(start.score), 'ad-hl'); t.append(' out of 100. His weekly scores appear here once the first week is logged.');
   }
   $('score-big').textContent = latest.score;
-  $('score-big').style.color = C3[st];
+  document.querySelector('.ad-hero').style.setProperty('--band', C3[st]);
   $('score-label').textContent = latest.n === 0 ? 'Onboarding' : latest.label;
   setStatus($('score-status'), st);
   const ch = $('score-change'); ch.textContent = d3.format('+')(latest.change);
@@ -433,7 +470,7 @@ function drawOverview(M) {
   const ring = $('score-ring'); ring.querySelectorAll('svg').forEach(s => s.remove());
   const S = 168, R = 74, Cc = 2 * Math.PI * R;
   const rs = d3.select(ring).insert('svg', ':first-child').attr('width', S).attr('height', S).attr('viewBox', `0 0 ${S} ${S}`).attr('aria-hidden', 'true');
-  rs.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', '#26262B').attr('stroke-width', 12);
+  rs.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', '#0B0B0B').attr('stroke-width', 12);
   const arc = rs.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', C3[st]).attr('stroke-width', 12)
     .attr('stroke-linecap', 'round').attr('transform', `rotate(-90 ${S / 2} ${S / 2})`).attr('stroke-dasharray', Cc).attr('stroke-dashoffset', Cc * (1 - latest.score / 100));
   if (!window.ringDone && matchMedia('(prefers-reduced-motion: no-preference)').matches) {
@@ -449,16 +486,16 @@ function drawOverview(M) {
   const y = d3.scaleLinear([0, 100], [H - m.b, m.t]);
   const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Weekly score');
   [[40, C3.amber], [70, C3.green]].forEach(([v, c]) => svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).attr('stroke', c).attr('stroke-opacity', .35).attr('stroke-dasharray', '3 4'));
-  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', '#3F3F46');
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', '#333333');
   const last = rows.length - 1, bw = Math.min(32, x.bandwidth());
   svg.selectAll('rect').data(rows).join('rect')
     .attr('x', d => x(d.label) + (x.bandwidth() - bw) / 2).attr('width', bw).attr('y', d => y(d.score)).attr('height', d => y(0) - y(d.score)).attr('rx', 4)
     .attr('fill', d => C3[RAG.hundred(d.score)]).attr('fill-opacity', (d, i) => i === last ? 1 : .55)
     .attr('stroke', (d, i) => i === last ? LIME : 'none').attr('stroke-width', 2);
   svg.selectAll('text.v').data(rows).join('text').attr('class', 'v').attr('x', d => x(d.label) + x.bandwidth() / 2).attr('y', d => y(d.score) - 7).attr('text-anchor', 'middle')
-    .attr('fill', (d, i) => i === last ? LIME : '#D4D4D8').style('font-size', '12px').style('font-weight', 600).text(d => d.score);
+    .attr('fill', (d, i) => i === last ? LIME : '#9A9A9A').style('font-size', '12px').style('font-weight', 600).text(d => d.score);
   svg.selectAll('text.l').data(rows).join('text').attr('class', 'l').attr('x', d => x(d.label) + x.bandwidth() / 2).attr('y', H - 4).attr('text-anchor', 'middle')
-    .attr('fill', '#A1A1AA').style('font-size', '12px').text(d => d.n === 0 ? 'Start' : (x.bandwidth() < 56 ? 'W' + d.n : d.label));
+    .attr('fill', '#9A9A9A').style('font-size', '12px').text(d => d.n === 0 ? 'Start' : (x.bandwidth() < 56 ? 'W' + d.n : d.label));
 }
 
 /* ---------- shared week-by-week line chart ---------- */
@@ -493,10 +530,10 @@ function weekChart(box, M, o) {
     svg.append('rect').attr('x', m.l - 4).attr('width', 3).attr('y', y(b) + 1).attr('height', Math.max(0, y(a) - y(b) - 2)).attr('rx', 1.5).attr('fill', c);
   });
   (o.ticks || y.ticks(5)).forEach(t => {
-    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', t ? '#2A2A2F' : '#3F3F46');
-    svg.append('text').attr('x', m.l - 9).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', '#A1A1AA').style('font-size', '11px').text((o.tickFmt || String)(t));
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', t ? '#2A2A2A' : '#333333');
+    svg.append('text').attr('x', m.l - 9).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', '#9A9A9A').style('font-size', '11px').text((o.tickFmt || String)(t));
   });
-  rows.forEach(d => svg.append('text').attr('x', x(d.label)).attr('y', H - 5).attr('text-anchor', 'middle').attr('fill', '#A1A1AA').style('font-size', '12px').text(lab(d)));
+  rows.forEach(d => svg.append('text').attr('x', x(d.label)).attr('y', H - 5).attr('text-anchor', 'middle').attr('fill', '#9A9A9A').style('font-size', '12px').text(lab(d)));
   if (o.slips) rows.filter(d => d.slip).forEach(d => {
     svg.append('line').attr('x1', x(d.label)).attr('x2', x(d.label)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', C3.red).attr('stroke-dasharray', '4 4');
     svg.append('text').attr('x', x(d.label)).attr('y', m.t - 6).attr('text-anchor', 'middle').attr('fill', C3.red).style('font-size', '11px').style('font-weight', 600).text('Slip');
@@ -512,14 +549,14 @@ function weekChart(box, M, o) {
       .attr('d', d3.line().x(p => x(p.d.label)).y(p => y(Math.min(p.v, o.yMax))));
     pts.forEach(p => {
       const fill = (!multi && o.rag) ? C3[o.rag(p.v)] : s.color;
-      svg.append('circle').attr('cx', x(p.d.label)).attr('cy', y(Math.min(p.v, o.yMax))).attr('r', multi ? 3.5 : 5).attr('fill', fill).attr('stroke', '#0A0A0B').attr('stroke-width', 2);
+      svg.append('circle').attr('cx', x(p.d.label)).attr('cy', y(Math.min(p.v, o.yMax))).attr('r', multi ? 3.5 : 5).attr('fill', fill).attr('stroke', '#0B0B0B').attr('stroke-width', 2);
       if (!multi) svg.append('text').attr('x', x(p.d.label)).attr('y', y(Math.min(p.v, o.yMax)) - 10).attr('text-anchor', 'middle').attr('fill', fill).style('font-size', '12px').style('font-weight', 600).text((o.fmt || fmt1)(p.v));
     });
   });
   // tooltip: one column per week
   const tip = el('div', 'ad-tip'); box.appendChild(tip);
   const step = x.step();
-  const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', '#71717A').style('display', 'none');
+  const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', '#666666').style('display', 'none');
   rows.forEach(d => {
     const show = () => {
       rule.attr('x1', x(d.label)).attr('x2', x(d.label)).style('display', null);
@@ -569,8 +606,8 @@ function drawCheckin(M) {
     series: [
       { name: 'Energy', color: LIME, value: d => d.energy, rag: RAG.ten },
       { name: 'Mood', color: '#FFFFFF', value: d => d.mood, rag: RAG.ten },
-      { name: 'Sleep', color: '#7DD3FC', value: d => d.sleep, rag: RAG.ten },
-      { name: 'Cravings (lower is better)', color: '#C084FC', dash: true, w: 2, value: d => d.cravings, rag: RAG.tenInv }
+      { name: 'Sleep', color: '#9A9A9A', value: d => d.sleep, rag: RAG.ten },
+      { name: 'Cravings (lower is better)', color: '#FF5F1F', dash: true, w: 2, value: d => d.cravings, rag: RAG.tenInv }
     ]
   });
 }
@@ -583,7 +620,7 @@ function ringCard(parent, o) {
   const rb = el('div', 'ad-ringbox'); c.appendChild(rb);
   const S = 132, R = 56, Cc = 2 * Math.PI * R;
   const svg = d3.select(rb).append('svg').attr('width', S).attr('height', S).attr('viewBox', `0 0 ${S} ${S}`).attr('aria-hidden', 'true');
-  svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', '#26262B').attr('stroke-width', 11);
+  svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', '#2A2A2A').attr('stroke-width', 11);
   if (o.fill > 0) {
     const arc = svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', R).attr('fill', 'none').attr('stroke', o.color).attr('stroke-width', 11)
       .attr('stroke-linecap', 'round').attr('transform', `rotate(-90 ${S / 2} ${S / 2})`).attr('stroke-dasharray', Cc).attr('stroke-dashoffset', Cc * (1 - Math.min(1, o.fill)));
@@ -610,7 +647,7 @@ function drawProgress(M) {
   // Goal 2: clean living — share of days clean since onboarding
   const share = M.daysLogged ? M.cleanDays / M.daysLogged : NaN;
   const cst = isNaN(share) ? null : share >= 0.9 ? 'green' : share >= 0.7 ? 'amber' : 'red';
-  ringCard(g, { n: 'Goal 2', title: 'Clean living', fill: isNaN(share) ? 0 : share, color: cst ? C3[cst] : '#3F3F46', value: String(M.cleanDays),
+  ringCard(g, { n: 'Goal 2', title: 'Clean living', fill: isNaN(share) ? 0 : share, color: cst ? C3[cst] : '#333333', value: String(M.cleanDays),
     unit: 'clean days', status: cst,
     sub: isNaN(share) ? 'Fills in as days are logged.' : `${d3.format('.0%')(share)} of days clean. Cravings ${fmt1(start.cravings)} → ${fmt1(latest.cravings)}.` });
 
@@ -622,7 +659,7 @@ function drawProgress(M) {
     ringCard(g, { n: 'Goal 3', title: 'Connection & trust', fill: fillAvg, color: C3[RAG.ten(nowAvg)], value: fmt1(nowAvg), unit: 'out of 10',
       status: RAG.ten(nowAvg), sub: ct.map(a => `${a.area} ${fmt1(a.onboarding)} → ${fmt1(a.now)}`).join(' · ') });
   } else {
-    ringCard(g, { n: 'Goal 3', title: 'Connection & trust', fill: 0, color: '#3F3F46', value: '—', valueColor: 'var(--muted)', unit: 'not re-scored yet',
+    ringCard(g, { n: 'Goal 3', title: 'Connection & trust', fill: 0, color: '#333333', value: '—', valueColor: 'var(--muted)', unit: 'not re-scored yet',
       sub: 'Fills in at his first monthly re-score.' });
   }
 
@@ -633,7 +670,7 @@ function drawProgress(M) {
     ringCard(g, { n: 'Goal 4', title: 'New life', fill: latest.hobby / tgt, color: C3[RAG.hobby(latest.hobby)], value: String(latest.hobby),
       unit: 'hobby sessions this week', status: RAG.hobby(latest.hobby), sub: `Target ${tgt} a week. On target ${onTarget} of ${logged.length} weeks.` });
   } else {
-    ringCard(g, { n: 'Goal 4', title: 'New life', fill: 0, color: '#3F3F46', value: '—', valueColor: 'var(--muted)', unit: 'hobby sessions', sub: `Target ${tgt} a week.` });
+    ringCard(g, { n: 'Goal 4', title: 'New life', fill: 0, color: '#333333', value: '—', valueColor: 'var(--muted)', unit: 'hobby sessions', sub: `Target ${tgt} a week.` });
   }
   window.ringsDone = true;
 
@@ -643,15 +680,15 @@ function drawProgress(M) {
   else {
     const cards = [
       { title: "Adrian's score", now: latest.score, nowRag: RAG.hundred, fmt: d3.format('d'),
-        opt: { yMax: 100, ticks: [0, 40, 70, 100], zones: ZONES.hundred, rag: RAG.hundred, fmt: d3.format('d'), label: 'Weekly score', series: [{ name: 'Score', color: '#E4E4E7', value: d => d.score }] } },
+        opt: { yMax: 100, ticks: [0, 40, 70, 100], zones: ZONES.hundred, rag: RAG.hundred, fmt: d3.format('d'), label: 'Weekly score', series: [{ name: 'Score', color: '#FFFFFF', value: d => d.score }] } },
       { title: 'Energy, mood & sleep', now: avg3(latest), nowRag: RAG.ten,
-        opt: { yMax: 10, ticks: [0, 4, 7, 10], zones: ZONES.ten, rag: RAG.ten, target: 8, label: 'Average of energy, mood and sleep', series: [{ name: 'Average', color: '#E4E4E7', value: avg3 }] } },
+        opt: { yMax: 10, ticks: [0, 4, 7, 10], zones: ZONES.ten, rag: RAG.ten, target: 8, label: 'Average of energy, mood and sleep', series: [{ name: 'Average', color: '#FFFFFF', value: avg3 }] } },
       { title: 'Cravings (lower is better)', now: latest.cravings, nowRag: RAG.tenInv,
-        opt: { yMax: 10, ticks: [0, 4, 7, 10], zones: ZONES.tenInv, rag: RAG.tenInv, target: 2, label: 'Weekly cravings', series: [{ name: 'Cravings', color: '#E4E4E7', value: d => d.cravings }] } },
+        opt: { yMax: 10, ticks: [0, 4, 7, 10], zones: ZONES.tenInv, rag: RAG.tenInv, target: 2, label: 'Weekly cravings', series: [{ name: 'Cravings', color: '#FFFFFF', value: d => d.cravings }] } },
       { title: 'Hobby sessions', now: latest.hobby, nowRag: RAG.hobby, fmt: d3.format('d'),
-        opt: { yMax: Math.max(4, d3.max(M.weeks, d => d.hobby || 0) + 1), zones: null, rag: RAG.hobby, target: tgt, fmt: d3.format('d'), label: 'Hobby sessions each week', series: [{ name: 'Sessions', color: '#E4E4E7', value: d => d.hobby }] } },
+        opt: { yMax: Math.max(4, d3.max(M.weeks, d => d.hobby || 0) + 1), zones: null, rag: RAG.hobby, target: tgt, fmt: d3.format('d'), label: 'Hobby sessions each week', series: [{ name: 'Sessions', color: '#FFFFFF', value: d => d.hobby }] } },
       { title: 'Triggers navigated', now: latest.share * 100, nowRag: v => v >= 100 ? 'green' : v >= 50 ? 'amber' : 'red', fmt: v => d3.format('.0f')(v) + '%',
-        opt: { yMax: 100, ticks: [0, 50, 100], tickFmt: v => v + '%', yWidth: 40, rag: v => v >= 100 ? 'green' : v >= 50 ? 'amber' : 'red', fmt: v => d3.format('.0f')(v) + '%', label: 'Share of triggers navigated', series: [{ name: 'Navigated', color: '#E4E4E7', value: d => d.n === 0 ? NaN : d.share * 100 }] } }
+        opt: { yMax: 100, ticks: [0, 50, 100], tickFmt: v => v + '%', yWidth: 40, rag: v => v >= 100 ? 'green' : v >= 50 ? 'amber' : 'red', fmt: v => d3.format('.0f')(v) + '%', label: 'Share of triggers navigated', series: [{ name: 'Navigated', color: '#FFFFFF', value: d => d.n === 0 ? NaN : d.share * 100 }] } }
     ];
     cards.forEach(cd => {
       const c = el('div', 'ad-trend');
@@ -672,9 +709,9 @@ function drawAreas(M) {
   if (!M.areas.length) { emptyMsg(box, 'No baseline scores found in the Baseline tab.'); return; }
   if (!box.clientWidth) return;
   const lg = el('div', 'ad-legend');
-  lg.innerHTML = '<span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#A1A1AA" stroke-width="1.5"/></svg>Onboarding</span>'
-    + '<span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#22C55E"/></svg>Now (coloured by zone)</span>'
-    + '<span><svg width="12" height="12"><line x1="6" x2="6" y1="0" y2="12" stroke="#C6F432" stroke-width="2"/></svg>Target</span>';
+  lg.innerHTML = '<span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="#9A9A9A" stroke-width="1.5"/></svg>Onboarding</span>'
+    + '<span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#E6FF00"/></svg>Now (coloured by zone)</span>'
+    + '<span><svg width="12" height="12"><line x1="6" x2="6" y1="0" y2="12" stroke="#E6FF00" stroke-width="2"/></svg>Target</span>';
   box.appendChild(lg);
   const order = M.goals.map(g => g.goal);
   const items = []; order.forEach(gn => { items.push({ head: gn }); M.areas.filter(a => a.goal === gn).forEach(a => items.push({ ...a })); });
@@ -683,32 +720,32 @@ function drawAreas(M) {
   const H = yPos + 24;
   const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Area scores at onboarding and now');
   let labW = 0;
-  items.filter(i => !i.head).forEach(i => { const t = svg.append('text').style('font-size', '14px').text(i.area); labW = Math.max(labW, t.node().getComputedTextLength()); t.remove(); });
+  items.filter(i => !i.head).forEach(i => { const t = svg.append('text').attr('class', 'ad-lbl').style('font-size', '14px').text(i.area); labW = Math.max(labW, t.node().getComputedTextLength()); t.remove(); });
   const narrow = W < 420;
   const x0 = Math.min(labW + 14, W * 0.42), x1 = W - (narrow ? 8 : 104);
   const x = d3.scaleLinear([0, 10], [x0, x1]);
-  [0, 4, 7, 10].forEach(t => svg.append('text').attr('x', x(t)).attr('y', H - 4).attr('text-anchor', 'middle').attr('fill', '#A1A1AA').style('font-size', '12px').text(t));
+  [0, 4, 7, 10].forEach(t => svg.append('text').attr('x', x(t)).attr('y', H - 4).attr('text-anchor', 'middle').attr('fill', '#9A9A9A').style('font-size', '12px').text(t));
   const tip = el('div', 'ad-tip'); box.appendChild(tip);
   items.forEach(it => {
-    if (it.head) { svg.append('text').attr('x', 0).attr('y', it.y).attr('fill', LIME).style('font-size', '12px').style('text-transform', 'uppercase').style('letter-spacing', '.12em').style('font-weight', 600).text(it.head); return; }
+    if (it.head) { svg.append('text').attr('class', 'ad-hd').attr('x', 0).attr('y', it.y).attr('fill', LIME).style('font-size', '12px').style('text-transform', 'uppercase').style('letter-spacing', '.12em').style('font-weight', 600).text(it.head); return; }
     const zones = it.inv ? [[0, 4, C3.green], [4, 7, C3.amber], [7, 10, C3.red]] : [[0, 4, C3.red], [4, 7, C3.amber], [7, 10, C3.green]];
     const rate = v => it.inv ? RAG.tenInv(v) : RAG.ten(v);
     const updated = it.weekly || it.rescored;
     const st = rate(it.now);
     const gr = svg.append('g');
     gr.append('rect').attr('x', 0).attr('y', it.y - rowH / 2).attr('width', W).attr('height', rowH).attr('fill', 'transparent');
-    gr.append('text').attr('x', 0).attr('y', it.y).attr('dy', '0.32em').attr('fill', '#FFFFFF').style('font-size', '14px').text(it.area);
+    gr.append('text').attr('class', 'ad-lbl').attr('x', 0).attr('y', it.y).attr('dy', '0.32em').attr('fill', '#FFFFFF').style('font-size', '14px').text(it.area);
     zones.forEach(([a, b, c]) => gr.append('rect').attr('x', x(a) + (a ? 1 : 0)).attr('width', x(b) - x(a) - (a ? 1 : 0) - (b < 10 ? 1 : 0)).attr('y', it.y - 4).attr('height', 8).attr('rx', a === 0 || b === 10 ? 4 : 0).attr('fill', c).attr('fill-opacity', .22));
     gr.append('line').attr('x1', x(it.onboarding)).attr('x2', x(it.now)).attr('y1', it.y).attr('y2', it.y).attr('stroke', '#FFFFFF').attr('stroke-width', 2).attr('stroke-opacity', .5);
     if (!isNaN(it.target)) gr.append('line').attr('x1', x(it.target)).attr('x2', x(it.target)).attr('y1', it.y - 10).attr('y2', it.y + 10).attr('stroke', LIME).attr('stroke-width', 2.5).attr('stroke-linecap', 'round');
-    gr.append('circle').attr('cx', x(it.onboarding)).attr('cy', it.y).attr('r', 4.5).attr('fill', '#161618').attr('stroke', '#A1A1AA').attr('stroke-width', 1.5);
-    if (updated) gr.append('circle').attr('cx', x(it.now)).attr('cy', it.y).attr('r', 7).attr('fill', C3[st]).attr('stroke', '#161618').attr('stroke-width', 2);
-    if (!narrow) gr.append('text').attr('x', W - 2).attr('y', it.y).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', updated ? C3[st] : '#71717A').style('font-size', '12px').style('font-weight', updated ? 600 : 400)
+    gr.append('circle').attr('cx', x(it.onboarding)).attr('cy', it.y).attr('r', 4.5).attr('fill', '#161616').attr('stroke', '#9A9A9A').attr('stroke-width', 1.5);
+    if (updated) gr.append('circle').attr('cx', x(it.now)).attr('cy', it.y).attr('r', 7).attr('fill', C3[st]).attr('stroke', '#161616').attr('stroke-width', 2);
+    if (!narrow) gr.append('text').attr('x', W - 2).attr('y', it.y).attr('dy', '0.32em').attr('text-anchor', 'end').attr('fill', updated ? C3[st] : '#666666').style('font-size', '12px').style('font-weight', updated ? 600 : 400)
       .text(updated ? fmt1(it.onboarding) + ' → ' + fmt1(it.now) : 'Re-score due');
     const show = () => {
       tip.innerHTML = ''; tip.appendChild(el('div', 'ad-tip-h', it.area + (it.inv ? ' (lower is better)' : '')));
       [['Onboarding', it.onboarding, rate(it.onboarding)], updated ? [it.weekly ? 'This week' : 'Latest re-score', it.now, st] : ['Now', 'Re-score due', null], ['Target', it.target, null]].forEach(([n, v, s]) => {
-        const rr = el('div', 'ad-tip-r'); rr.appendChild(el('span', 'ad-tip-n', n)); const b = el('b', '', typeof v === 'number' ? fmt1(v) + ' / 10' : v); b.style.color = s ? C3[s] : (typeof v === 'number' ? LIME : '#A1A1AA'); rr.appendChild(b); tip.appendChild(rr);
+        const rr = el('div', 'ad-tip-r'); rr.appendChild(el('span', 'ad-tip-n', n)); const b = el('b', '', typeof v === 'number' ? fmt1(v) + ' / 10' : v); b.style.color = s ? C3[s] : (typeof v === 'number' ? LIME : '#9A9A9A'); rr.appendChild(b); tip.appendChild(rr);
       });
       tip.style.display = 'block';
       const scale = svg.node().getBoundingClientRect().width / W;
