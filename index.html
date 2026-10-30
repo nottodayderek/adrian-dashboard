@@ -419,7 +419,12 @@ function buildModel(feed) {
     cravings: num(val(r, 'craving')), clean: val(r, 'clean'), note: String(val(r, 'note') || '').trim()
   })).filter(d => d.date).sort((a, b) => a.date - b.date);
   const onbDate = toDate(SETTINGS.onboardingDate);
-  const cleanDays = daily.filter(d => isYes(d.clean)).length;
+  // Clean days count up every day from the start date (today included).
+  // A day comes off only for a slip: a row on the Daily tab with "N" in Clean today.
+  const today = d3.timeDay.floor(new Date());
+  const daysSince = onbDate ? Math.max(0, d3.timeDay.count(onbDate, today) + 1) : daily.length;
+  const slipDays = new Set(daily.filter(d => isNo(d.clean) && (!onbDate || d.date >= onbDate) && d.date <= today).map(d => +d.date)).size;
+  const cleanDays = Math.max(0, daysSince - slipDays);
 
   // Weekly log
   const wk = (feed.weekly || []).map(r => ({ raw: r, start: toDate(val(r, 'week start', 'week')) })).filter(w => w.start).sort((a, b) => a.start - b.start);
@@ -473,7 +478,7 @@ function buildModel(feed) {
   if (onbDate && !isNaN(base('energy'))) series.push({ date: onbDate, energy: base('energy'), mood: base('mood'), sleep: base('sleep'), cravings: base('craving'), clean: '', note: 'Onboarding baseline', onboarding: true });
   daily.forEach(d => series.push(d));
 
-  return { areas, daily, series, weeks, goals, cleanDays, daysLogged: daily.length, money: cleanDays * SETTINGS.moneyPerCleanDay };
+  return { areas, daily, series, weeks, goals, cleanDays, daysLogged: daysSince, slipDays, money: cleanDays * SETTINGS.moneyPerCleanDay };
 }
 
 /* ---------- helpers ---------- */
