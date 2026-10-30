@@ -154,6 +154,28 @@ nav.ad-nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; b
 .ad-tip .ad-tip-r { display: flex; align-items: center; gap: 6px; }
 .ad-tip .ad-tip-n { color: var(--grey); min-width: 4.5rem; }
 
+/* CLEAR */
+.ad-clear-head { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--gap-lg); align-items: end; }
+.ad-pane-title { font-family: var(--display); font-weight: 800; font-size: 26px; margin: 4px 0 0; text-wrap: balance; }
+.ad-focus { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; background: var(--panel-2); border-left: 6px solid var(--orange); border-radius: var(--r); padding: 14px 18px; }
+.ad-focus .L { font-family: var(--display); font-weight: 900; font-size: 48px; line-height: 1; color: var(--orange); }
+.ad-focus .k { font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--fluoro); }
+.ad-focus .n { font-family: var(--display); font-weight: 800; font-size: 20px; }
+.ad-focus .d { font-size: 13px; color: var(--grey); }
+.ad-pillars { display: grid; gap: 12px; }
+.ad-pil { display: grid; grid-template-columns: 52px 1fr 92px; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
+.ad-pil.focus { border-color: var(--orange); }
+.ad-pil .L { font-family: var(--display); font-weight: 900; font-size: 40px; color: var(--orange); line-height: 1; text-align: center; }
+.ad-pil .mid { min-width: 0; }
+.ad-pil .name { font-family: var(--display); font-weight: 800; font-size: 17px; }
+.ad-pil .def { font-size: 13px; color: var(--grey); }
+.ad-pil .track { height: 10px; background: var(--panel-2); border-radius: 5px; margin-top: 8px; position: relative; overflow: hidden; }
+.ad-pil .track span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 5px; transition: width .6s ease; }
+.ad-pil .sc { font-family: var(--display); font-weight: 900; font-size: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+.ad-pil .sc small { display: block; font-size: 11px; color: var(--grey); font-weight: 600; font-family: var(--body); }
+.ad-pil .tag { display: inline-block; margin-left: 8px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--black); background: var(--orange); padding: 2px 6px; border-radius: 2px; vertical-align: 2px; font-family: var(--display); font-weight: 800; }
+@media (max-width: 480px) { .ad-pil { grid-template-columns: 40px 1fr 72px; } .ad-pil .L { font-size: 32px; } }
+
 /* Weekly log */
 .ad-wins { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--gap-md); }
 .ad-win-card { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--orange); border-radius: var(--r); padding: var(--pad-lg); min-height: 7rem; display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap-sm); }
@@ -199,6 +221,7 @@ footer .wrap { padding-block: 20px 32px; color: var(--grey); font-size: 12px; bo
   <div class="wrap ad-tabs" role="tablist">
     <button class="ad-tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
     <button class="ad-tab" role="tab" data-tab="checkin" aria-selected="false">Weekly check-in</button>
+    <button class="ad-tab" role="tab" data-tab="clear" aria-selected="false">CLEAR</button>
     <button class="ad-tab" role="tab" data-tab="progress" aria-selected="false">Progress</button>
     <button class="ad-tab" role="tab" data-tab="log" aria-selected="false">Weekly log</button>
   </div>
@@ -264,6 +287,36 @@ footer .wrap { padding-block: 20px 32px; color: var(--grey); font-size: 12px; bo
       <h2>Weekly check-in</h2>
       <p class="ad-note">One point per week, from onboarding. The coloured zones show where energy, mood and sleep sit: yellow is firing, light orange is mid range, orange needs attention. Cravings are the dashed line, and lower is better. A week with a slip is marked with a dashed line.</p>
       <div class="ad-chart" id="weekly-chart"></div>
+    </div>
+  </section>
+
+  <!-- CLEAR -->
+  <section class="ad-pane" id="clear" role="tabpanel" hidden>
+    <div class="ad-clear-head">
+      <div>
+        <p class="ad-sect">The DEREK. Framework</p>
+        <h2 class="ad-pane-title">His five CLEAR scores</h2>
+        <p class="ad-note">Scored out of 10 at each weekly check-in. His lowest pillar becomes his focus for the week. <span id="clear-when"></span></p>
+      </div>
+      <div class="ad-focus" id="clear-focus" hidden>
+        <div class="L" id="clear-focus-l"></div>
+        <div><div class="k">Focus pillar</div><div class="n" id="clear-focus-n"></div><div class="d" id="clear-focus-d"></div></div>
+      </div>
+    </div>
+    <div class="ad-pillars" id="pillars"></div>
+    <div class="ad-card">
+      <h2>Each pillar, week by week</h2>
+      <p class="ad-note">Hover or tap a week to see all five scores.</p>
+      <div class="ad-chart" id="clear-chart"></div>
+    </div>
+    <div class="ad-card">
+      <h2>Every pillar, every week</h2>
+      <div class="ad-table-wrap" style="margin-top:12px">
+        <table class="ad-table">
+          <thead><tr><th>Week</th><th class="ad-n">C</th><th class="ad-n">L</th><th class="ad-n">E</th><th class="ad-n">A</th><th class="ad-n">R</th></tr></thead>
+          <tbody id="clear-body"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -377,6 +430,7 @@ function buildModel(feed) {
   const weeks = [{
     n: 0, label: 'Start', start: onbDate, faced: NaN, nav: NaN, hobby: SETTINGS.baselineHobbySessions, win: '', share: NaN, slip: false,
     energy: base('energy'), mood: base('mood'), sleep: base('sleep'), cravings: base('craving'),
+    clear: [NaN, NaN, NaN, NaN, NaN],
     score: scoreOf(base('energy'), base('mood'), base('sleep'), base('craving'), SETTINGS.baselineTriggerShare, SETTINGS.baselineHobbySessions, false)
   }];
   wk.forEach((w, i) => {
@@ -393,7 +447,7 @@ function buildModel(feed) {
     weeks.push({ n: i + 1, label: 'Week ' + (i + 1), start: w.start, faced, nav, hobby: isNaN(hobby) ? 0 : hobby, total,
       energy: avg('energy'), mood: avg('mood'), sleep: avg('sleep'), cravings: avg('cravings'),
       share: isNaN(faced) ? NaN : share, slip: days.some(d => isNo(d.clean)) || (cleanCol !== '' && !isYes(cleanCol)),
-      win: String(val(r, 'weekly win', 'win') || '').trim(),
+      win: String(val(r, 'weekly win', 'win') || '').trim(), clear: clearOf(r),
       score: scoreOf(avg('energy'), avg('mood'), avg('sleep'), avg('cravings'), share, isNaN(hobby) ? 0 : hobby, cleanWeek) });
   });
   weeks.forEach((w, i) => { w.change = i ? w.score - weeks[i - 1].score : 0; });
@@ -757,6 +811,68 @@ function drawAreas(M) {
   });
 }
 
+/* ---------- CLEAR ---------- */
+const PILLARS = [
+  { k: 'C', name: 'Connection', def: 'Relationships, communication and real presence.', color: '#FF5F1F' },
+  { k: 'L', name: 'Lifestyle', def: 'Health, movement, sleep and recovery.', color: '#E6FF00' },
+  { k: 'E', name: 'Exploration', def: 'Growth, challenge and stepping outside the comfort zone.', color: '#FFFFFF' },
+  { k: 'A', name: 'Attitude', def: 'Mindset, resilience, purpose and belief.', color: '#FF9A5C' },
+  { k: 'R', name: 'Routine', def: 'Habits, goals and priorities.', color: '#9A9A9A', dash: true }
+];
+// Reads the five CLEAR columns on the Weekly tab, e.g. "CLEAR Connection"
+const clearOf = r => PILLARS.map(p => {
+  const k = Object.keys(r).find(c => c.toLowerCase().replace(/[^a-z]/g, '').includes(p.name.toLowerCase()));
+  return k === undefined ? NaN : num(r[k]);
+});
+
+function drawClear(M) {
+  const cw = M.weeks.filter(w => w.n > 0 && w.clear && w.clear.some(v => !isNaN(v)));
+  const lw = cw[cw.length - 1], pw = cw[cw.length - 2];
+  const cur = lw ? lw.clear : PILLARS.map(() => NaN);
+  const scored = cur.filter(v => !isNaN(v));
+  const low = scored.length ? Math.min(...scored) : NaN;
+  const focusI = cur.findIndex(v => v === low);
+
+  $('clear-when').textContent = lw ? `Scored at the ${lw.label.toLowerCase()} check-in.` : 'His first CLEAR scores go in at the next weekly check-in.';
+  const fb = $('clear-focus');
+  if (focusI >= 0) { fb.hidden = false; $('clear-focus-l').textContent = PILLARS[focusI].k; $('clear-focus-n').textContent = PILLARS[focusI].name; $('clear-focus-d').textContent = PILLARS[focusI].def; }
+  else fb.hidden = true;
+
+  const list = $('pillars'); list.innerHTML = '';
+  PILLARS.forEach((p, i) => {
+    const v = cur[i], has = !isNaN(v), prev = pw ? pw.clear[i] : NaN;
+    const row = el('div', 'ad-pil' + (i === focusI ? ' focus' : ''));
+    row.appendChild(el('div', 'L', p.k));
+    const mid = el('div', 'mid');
+    const nm = el('div', 'name', p.name); if (i === focusI) nm.appendChild(el('span', 'tag', 'Focus')); mid.appendChild(nm);
+    mid.appendChild(el('div', 'def', p.def));
+    const tr = el('div', 'track'); const bar = el('span'); tr.appendChild(bar); mid.appendChild(tr);
+    if (has) { bar.style.background = C3[RAG.ten(v)]; requestAnimationFrame(() => { bar.style.width = (v * 10) + '%'; }); }
+    row.appendChild(mid);
+    const sc = el('div', 'sc', has ? fmt1(v) : '—');
+    const ch = !has ? 'Not scored yet' : isNaN(prev) ? 'First score' : (v - prev === 0 ? 'No change' : d3.format('+.1~f')(v - prev) + ' on last');
+    sc.appendChild(el('small', '', ch));
+    if (has) sc.style.color = C3[RAG.ten(v)];
+    row.appendChild(sc);
+    list.appendChild(row);
+  });
+
+  const box = $('clear-chart');
+  if (cw.length === 0) emptyMsg(box, 'The tracker starts once his first CLEAR scores are in.');
+  else weekChart(box, { weeks: cw }, {
+    height: 260, yMax: 10, ticks: [0, 2, 4, 6, 8, 10], label: 'CLEAR pillar scores week by week',
+    series: PILLARS.map((p, i) => ({ name: p.k + ' · ' + p.name, color: p.color, dash: p.dash, w: 2.5, value: d => d.clear[i], rag: RAG.ten }))
+  });
+
+  const tb = $('clear-body'); tb.innerHTML = '';
+  if (!cw.length) { const tr = el('tr'); const td = el('td', 'ad-empty', 'No CLEAR scores yet.'); td.colSpan = 6; tr.appendChild(td); tb.appendChild(tr); }
+  cw.slice().reverse().forEach(w => {
+    const tr = el('tr'); tr.appendChild(el('td', '', w.label));
+    w.clear.forEach(v => { const td = el('td', 'ad-n'); if (isNaN(v)) td.textContent = '—'; else td.appendChild(el('span', 'ad-pill ' + RAG.ten(v), fmt1(v))); tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+}
+
 /* ---------- weekly log ---------- */
 function drawLog(M) {
   const wins = $('wins'); wins.innerHTML = '';
@@ -778,7 +894,7 @@ function drawLog(M) {
 }
 
 /* ---------- wiring ---------- */
-function drawAll() { if (!MODEL) return; drawOverview(MODEL); drawCheckin(MODEL); drawProgress(MODEL); drawLog(MODEL); }
+function drawAll() { if (!MODEL) return; drawOverview(MODEL); drawCheckin(MODEL); drawClear(MODEL); drawProgress(MODEL); drawLog(MODEL); }
 document.querySelectorAll('.ad-tab').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('.ad-tab').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
   document.querySelectorAll('.ad-pane').forEach(p => { p.hidden = p.id !== btn.dataset.tab; });
@@ -786,7 +902,7 @@ document.querySelectorAll('.ad-tab').forEach(btn => btn.addEventListener('click'
   drawAll();
 }));
 const startTab = location.hash.slice(1);
-if (['overview', 'checkin', 'progress', 'log'].includes(startTab)) document.querySelector(`.ad-tab[data-tab="${startTab}"]`).click();
+if (['overview', 'checkin', 'clear', 'progress', 'log'].includes(startTab)) document.querySelector(`.ad-tab[data-tab="${startTab}"]`).click();
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 150); });
 
 async function load() {
